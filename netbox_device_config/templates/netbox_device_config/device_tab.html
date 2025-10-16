@@ -1,0 +1,36 @@
+{% load static %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title">Device Config History</h5>
+        <a href="{% url 'plugins:netbox_device_config:backup_device' device.id %}" class="btn btn-primary btn-sm float-end">
+            Backup Now
+        </a>
+    </div>
+    <div class="card-body">
+        {% if configs %}
+        <table class="table table-sm table-hover">
+            <thead>
+            <tr>
+                <th>Date</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for c in configs %}
+            <tr>
+                <td>{{ c.created_at }}</td>
+                <td>
+                    <a href="{% url 'plugins:netbox_device_config:view_config' c.id %}" class="btn btn-xs btn-outline-primary">View</a>
+                    {% if not forloop.first %}
+                    <a href="{% url 'plugins:netbox_device_config:compare_config' c.id %}" class="btn btn-xs btn-outline-warning">Diff</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted">No backups yet.</p>
+        {% endif %}
+    </div>
+</div>
