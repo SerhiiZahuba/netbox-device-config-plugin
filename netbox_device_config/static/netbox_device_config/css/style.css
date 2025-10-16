@@ -1,0 +1,60 @@
+/* === Device Config Styles === */
+
+.config-container {
+    margin-top: 20px;
+}
+
+.config-actions {
+    margin-bottom: 15px;
+}
+
+pre.config-output {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    padding: 12px;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 13px;
+    white-space: pre-wrap;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.alert {
+    margin-top: 10px;
+}
+
+.btn-primary {
+    background-color: #007bff !important;
+    border-color: #007bff !important;
+}
+
+.btn-primary:hover {
+    background-color: #0069d9 !important;
+    border-color: #0062cc !important;
+}
+
+.btn-secondary {
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268 !important;
+    border-color: #545b62 !important;
+}
+
+.table-sm th,
+.table-sm td {
+    padding: 0.4rem !important;
+}
+
+pre.config-diff {
+    background-color: #272822;
+    color: #f8f8f2;
+    border-radius: 5px;
+    padding: 10px;
+    font-family: monospace;
+    font-size: 13px;
+    overflow-x: auto;
+}
