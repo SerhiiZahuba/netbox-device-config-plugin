@@ -1,7 +1,7 @@
 from django.shortcuts import get_object_or_404, render, redirect
 from django.views import View
-from .models import DeviceCredential
-from dcim.models import Device
+from .models import DeviceCredential, BackupCommandSetting
+from dcim.models import Device, Platform
 import paramiko
 from django.contrib import messages
 from django.utils import timezone
@@ -15,6 +15,70 @@ from django.utils.timezone import now, localdate
 from django.http import HttpResponse
 from netbox.views import generic
 from utilities.views import ViewTab, register_model_view
+
+
+
+class BackupSettingsListView(View):
+    """
+    Show all vendor backup commands
+    """
+    def get(self, request):
+        settings = BackupCommandSetting.objects.all().order_by("vendor")
+        return render(request, "netbox_device_config/settings_list.html", {"settings": settings})
+
+
+class BackupSettingsCreateView(View):
+    """
+    Add new vendor command
+    """
+    def get(self, request):
+        return render(request, "netbox_device_config/settings_add.html")
+
+    def post(self, request):
+        vendor = request.POST.get("vendor")
+        command = request.POST.get("command")
+        notes = request.POST.get("notes")
+
+        if not vendor or not command:
+            messages.error(request, "Vendor and command are required.")
+            return redirect("plugins:netbox_device_config:backup_settings_add")
+
+        BackupCommandSetting.objects.create(
+            vendor=vendor.strip(),
+            command=command.strip(),
+            notes=notes.strip() if notes else None,
+        )
+        messages.success(request, f"Added backup command for {vendor}")
+        return redirect("plugins:netbox_device_config:backup_settings_list")
+
+
+class BackupSettingsEditView(View):
+    """
+    Edit existing vendor command
+    """
+    def get(self, request, pk):
+        setting = get_object_or_404(BackupCommandSetting, pk=pk)
+        return render(request, "netbox_device_config/settings_edit.html", {"setting": setting})
+
+    def post(self, request, pk):
+        setting = get_object_or_404(BackupCommandSetting, pk=pk)
+        setting.vendor = request.POST.get("vendor")
+        setting.command = request.POST.get("command")
+        setting.notes = request.POST.get("notes")
+        setting.save()
+        messages.success(request, f"Updated backup command for {setting.vendor}")
+        return redirect("plugins:netbox_device_config:backup_settings_list")
+
+
+class BackupSettingsDeleteView(View):
+    """
+    Delete vendor command
+    """
+    def post(self, request, pk):
+        setting = get_object_or_404(BackupCommandSetting, pk=pk)
+        messages.success(request, f"Deleted {setting.vendor}")
+        setting.delete()
+        return redirect("plugins:netbox_device_config:backup_settings_list")
 
 @register_model_view(Device, name="config", path="config")
 class DeviceConfigTabView(generic.ObjectView):
