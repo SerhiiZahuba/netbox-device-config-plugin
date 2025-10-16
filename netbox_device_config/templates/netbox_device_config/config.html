@@ -1,0 +1,32 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'netbox_device_config/css/style.css' %}">
+
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<h2>Device: {{ device.name }}</h2>
+
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-primary">🔄 Забрати новий конфіг</button>
+    <a href="{% url 'plugins:netbox_device_config:config_history' device.id %}" class="btn btn-secondary">📜 History</a>
+</form>
+
+{% if messages %}
+<div class="mt-3">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if config_data %}
+<h4 class="mt-4">Новий конфіг:</h4>
+<pre style="background:#f8f9fa; padding:10px;">{{ config_data }}</pre>
+{% elif latest_config %}
+<h4 class="mt-4">Останній конфіг ({{ latest_config.created_at }})</h4>
+<pre style="background:#f8f9fa; padding:10px;">{{ latest_config.config }}</pre>
+{% else %}
+<p class="mt-4">Ще не збережено жодного конфігу.</p>
+{% endif %}
+{% endblock %}
