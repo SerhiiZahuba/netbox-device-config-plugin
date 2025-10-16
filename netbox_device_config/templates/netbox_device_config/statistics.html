@@ -1,0 +1,33 @@
+{% extends 'base/layout.html' %}
+{% load static %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <strong>Backup Statistics</strong>
+    </div>
+    <div class="card-body">
+        <table class="table table-striped table-sm">
+            <tbody>
+            <tr>
+                <th>Backups Today</th>
+                <td>{{ today_backups }}</td>
+            </tr>
+            <tr>
+                <th>Total Backups</th>
+                <td>{{ total_backups }}</td>
+            </tr>
+            <tr>
+                <th>Total Backup Size</th>
+                <td>{{ total_size }}</td>
+            </tr>
+
+            <tr>
+                <th>Failed Backups</th>
+                <td>{{ failed_backups }}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
