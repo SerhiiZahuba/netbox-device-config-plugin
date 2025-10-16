@@ -66,7 +66,7 @@ class BackupStatisticsView(View):
 
         total_size = _human_size(total_size_raw)
 
-        failed_backups = 0  # заміниш, коли буде поле статусу
+        failed_backups = 0
 
         return render(request, "netbox_device_config/statistics.html", {
             "today_backups": today_backups,
@@ -94,7 +94,8 @@ def backup_device(request, device_id):
 
 def view_config(request, config_id):
     conf = get_object_or_404(DeviceConfigHistory, id=config_id)
-    return render(request, 'netbox_device_config/view_config.html', {'config': conf})
+    return render(request, "netbox_device_config/config_content.html", {"conf": conf})
+
 
 def compare_config(request, config_id):
     conf_new = get_object_or_404(DeviceConfigHistory, id=config_id)
