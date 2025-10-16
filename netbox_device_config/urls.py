@@ -21,5 +21,9 @@ urlpatterns = [
     path("view/<int:config_id>/", views.view_config, name="view_config"),
     path("compare/<int:config_id>/", views.compare_config, name="compare_config"),
     path("download/<int:config_id>/", views.download_config, name="download_config"),
+   path("settings/", views.BackupSettingsListView.as_view(), name="backup_settings_list"),
+       path("settings/add/", views.BackupSettingsCreateView.as_view(), name="backup_settings_add"),
+       path("settings/<int:pk>/edit/", views.BackupSettingsEditView.as_view(), name="backup_settings_edit"),
+       path("settings/<int:pk>/delete/", views.BackupSettingsDeleteView.as_view(), name="backup_settings_delete"),
 
 ]
