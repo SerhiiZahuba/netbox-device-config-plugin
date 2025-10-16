@@ -1,0 +1,37 @@
+{% extends 'base/layout.html' %}
+{% block content %}
+<h2>Backup Command Settings</h2>
+
+<a href="{% url 'plugins:netbox_device_config:backup_settings_add' %}" class="btn btn-primary mb-3">
+    <i class="mdi mdi-plus"></i> Add New
+</a>
+
+<table class="table table-hover table-bordered align-middle">
+    <thead class="table-light">
+    <tr>
+        <th>Vendor / Type</th>
+        <th>Backup Command</th>
+        <th>Notes</th>
+        <th width="160">Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for s in settings %}
+    <tr>
+        <td><strong>{{ s.vendor }}</strong></td>
+        <td><code>{{ s.command }}</code></td>
+        <td>{{ s.notes|default:"—" }}</td>
+        <td>
+            <a href="{% url 'plugins:netbox_device_config:backup_settings_edit' s.id %}" class="btn btn-sm btn-outline-primary">Edit</a>
+            <form method="post" action="{% url 'plugins:netbox_device_config:backup_settings_delete' s.id %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+            </form>
+        </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="4" class="text-center text-muted">No settings yet.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
