@@ -9,11 +9,42 @@ from .models import DeviceCredential, DeviceConfigHistory, DeviceConfigHistory
 import difflib
 from datetime import datetime
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
 from .models import DeviceConfigHistory
 from django.db.models import Sum, Count
 from django.utils.timezone import now, localdate
+from django.http import HttpResponse
+from netbox.views import generic
+from utilities.views import ViewTab, register_model_view
 
+@register_model_view(Device, name="config", path="config")
+class DeviceConfigTabView(generic.ObjectView):
+    """
+    Tab "Config"
+    """
+    queryset = Device.objects.all()
+
+    tab = ViewTab(
+        label="Config",
+        badge=lambda obj: DeviceConfigHistory.objects.filter(device=obj).count(),
+        permission="netbox_device_config.view_deviceconfighistory",
+    )
+
+    def get(self, request, *args, **kwargs):
+        device = get_object_or_404(Device, pk=kwargs.get("pk"))
+        history = (
+            DeviceConfigHistory.objects.filter(device=device)
+            .order_by("-created_at")[:20]
+        )
+
+        return render(
+            request,
+            "netbox_device_config/device_config_tab.html",
+            {
+                "object": device,
+                "tab": self.tab,
+                "history": history,
+            },
+        )
 
 def _human_size(num):
     if num < 1024:
