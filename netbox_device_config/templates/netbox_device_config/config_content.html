@@ -1,0 +1,69 @@
+{% if conf %}
+<div class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-bold">
+            Config ID: {{ conf.id }} — {{ conf.created_at|date:"Y-m-d H:i" }}
+        </span>
+        <div>
+            <a href="{% url 'plugins:netbox_device_config:compare_config' conf.id %}"
+               class="btn btn-sm btn-outline-secondary">Diff</a>
+
+            <a href="{% url 'plugins:netbox_device_config:download_config' conf.id %}"
+               class="btn btn-sm btn-success">Download</a>
+
+            <button type="button"
+                    class="btn btn-sm btn-outline-primary"
+                    data-config-id="{{ conf.id }}"
+                    onclick="copyConfig(this)">
+                Copy
+            </button>
+        </div>
+    </div>
+
+    <div class="card-body p-0">
+        <div class="config-scroll p-3"
+             id="config-{{ conf.id }}"
+             style="
+                font-family: monospace;
+                white-space: pre-wrap;
+                max-height: 70vh;
+                overflow-y: auto;
+                overflow-x: auto;
+                background-color: #f9fafb;
+                border-top: 1px solid #dee2e6;
+                border-bottom: 1px solid #dee2e6;
+             ">
+            {{ conf.config|default:"(empty configuration)" }}
+        </div>
+    </div>
+</div>
+
+<script>
+    function copyConfig(button) {
+        const configId = button.getAttribute('data-config-id');
+        const configBlock = document.getElementById(`config-${configId}`);
+        if (!configBlock) {
+            alert("Configuration block not found!");
+            return;
+        }
+
+        const text = configBlock.innerText.trim();
+
+        navigator.clipboard.writeText(text).then(() => {
+            const oldText = button.innerHTML;
+            button.innerHTML = 'Copied!';
+            button.classList.remove('btn-outline-primary');
+            button.classList.add('btn-success');
+            setTimeout(() => {
+                button.innerHTML = oldText;
+                button.classList.remove('btn-success');
+                button.classList.add('btn-outline-primary');
+            }, 1500);
+        }).catch(err => {
+            alert('Failed to copy: ' + err);
+        });
+    }
+</script>
+{% else %}
+<p class="text-muted">No configuration available.</p>
+{% endif %}
