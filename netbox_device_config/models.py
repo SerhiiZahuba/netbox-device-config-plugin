@@ -1,5 +1,6 @@
 from django.db import models
 from dcim.models import Device
+from dcim.models import Platform
 
 class DeviceCredential(models.Model):
     device = models.OneToOneField(Device, on_delete=models.CASCADE)
@@ -33,3 +34,10 @@ class DeviceConfigHistory(models.Model):
         else:
             return f"{self.size / (1024 * 1024):.1f} MB"
 
+class BackupCommandSetting(models.Model):
+    vendor = models.CharField(max_length=100, unique=True, help_text="Device type or vendor name, e.g. Mikrotik, Cisco, Juniper")
+    command = models.CharField(max_length=255, help_text="CLI command for backup, e.g. 'export compact' or 'show running-config'")
+    notes = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.vendor} — {self.command}"
