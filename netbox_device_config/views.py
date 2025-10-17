@@ -18,6 +18,7 @@ from utilities.views import ViewTab, register_model_view
 
 
 
+
 class BackupSettingsListView(View):
     """
     Show all vendor backup commands
@@ -202,7 +203,8 @@ class DeviceCredentialBackupView(View):
                 timeout=10
             )
 
-            stdin, stdout, stderr = client.exec_command("export compact")
+            command = cred.template.command if cred.template else "export compact"
+            stdin, stdout, stderr = client.exec_command(command)
             output = stdout.read().decode("utf-8", errors="ignore")
             err = stderr.read().decode("utf-8", errors="ignore")
 
@@ -259,7 +261,11 @@ class DeviceCredentialCreateView(View):
     """
     def get(self, request):
         devices = Device.objects.all().order_by("name")
-        return render(request, "netbox_device_config/credential_add.html", {"devices": devices})
+        templates = BackupCommandSetting.objects.all().order_by("vendor")
+        return render(request, "netbox_device_config/credential_add.html", {
+            "devices": devices,
+            "templates": templates,
+        })
 
     def post(self, request):
         device_id = request.POST.get("device")
@@ -267,6 +273,7 @@ class DeviceCredentialCreateView(View):
         port = request.POST.get("port")
         username = request.POST.get("username")
         password = request.POST.get("password")
+        template_id = request.POST.get("template")
 
         DeviceCredential.objects.create(
             device_id=device_id,
@@ -274,30 +281,43 @@ class DeviceCredentialCreateView(View):
             port=port,
             username=username,
             password=password,
+            template_id=template_id if template_id else None,
         )
         return redirect("plugins:netbox_device_config:devicecredential_list")
 
 class DeviceCredentialEditView(View):
     """
-    Edit existing credential
+    Edit existing device credential
     """
     def get(self, request, pk):
-        cred = DeviceCredential.objects.get(pk=pk)
+        cred = get_object_or_404(DeviceCredential, pk=pk)
         devices = Device.objects.all().order_by("name")
+        templates = BackupCommandSetting.objects.all().order_by("vendor")
+
         return render(request, "netbox_device_config/credential_edit.html", {
             "cred": cred,
             "devices": devices,
+            "templates": templates,
         })
 
     def post(self, request, pk):
-        cred = DeviceCredential.objects.get(pk=pk)
+        cred = get_object_or_404(DeviceCredential, pk=pk)
+
         cred.device_id = request.POST.get("device")
         cred.host = request.POST.get("host")
         cred.port = request.POST.get("port")
         cred.username = request.POST.get("username")
         cred.password = request.POST.get("password")
+
+
+        template_id = request.POST.get("template")
+        cred.template_id = template_id or None
+
         cred.save()
+
+        messages.success(request, f"Updated credentials for {cred.device.name}")
         return redirect("plugins:netbox_device_config:devicecredential_list")
+
 
 class DeviceCredentialListView(View):
     """
