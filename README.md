@@ -1,4 +1,7 @@
-This is currently a beta version. Which can manually receive configuration from devices (tested on Mikrotik).
+![NetBox version](https://img.shields.io/badge/netbox-4.4.1-blue)
+![Device tested](https://img.shields.io/badge/Mikrotik-Cisco-blue)
+<br>
+This is currently a beta version. Which can manually receive configuration from devices (tested on !(https://img.shields.io/badge/Mikrotik-Cisco)   Mikrotik, Cisco).
 
 What the plugin can do now:
 1) Manual backup
