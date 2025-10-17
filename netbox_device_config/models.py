@@ -2,6 +2,16 @@ from django.db import models
 from dcim.models import Device
 from dcim.models import Platform
 
+
+
+class BackupCommandSetting(models.Model):
+    vendor = models.CharField(max_length=100, unique=True, help_text="Device type or vendor name, e.g. Mikrotik, Cisco, Juniper")
+    command = models.CharField(max_length=255, help_text="CLI command for backup, e.g. 'export compact' or 'show running-config'")
+    notes = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.vendor} — {self.command}"
+
 class DeviceCredential(models.Model):
     device = models.OneToOneField(Device, on_delete=models.CASCADE)
     host = models.CharField(max_length=255)
@@ -9,8 +19,18 @@ class DeviceCredential(models.Model):
     username = models.CharField(max_length=100)
     password = models.CharField(max_length=255)
 
+
+    template = models.ForeignKey(
+        BackupCommandSetting,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='credentials',
+        help_text="Backup command template to use for this device"
+    )
+
     def __str__(self):
-        return f"{self.device.name} ({self.username}@{self.host}:{self.port})"
+        return f"{self.device.name} ({self.host})"
 
 
 class DeviceConfigHistory(models.Model):
@@ -34,10 +54,3 @@ class DeviceConfigHistory(models.Model):
         else:
             return f"{self.size / (1024 * 1024):.1f} MB"
 
-class BackupCommandSetting(models.Model):
-    vendor = models.CharField(max_length=100, unique=True, help_text="Device type or vendor name, e.g. Mikrotik, Cisco, Juniper")
-    command = models.CharField(max_length=255, help_text="CLI command for backup, e.g. 'export compact' or 'show running-config'")
-    notes = models.TextField(blank=True, null=True)
-
-    def __str__(self):
-        return f"{self.vendor} — {self.command}"
