@@ -16,14 +16,22 @@ urlpatterns = [
     path("config/<int:config_id>/diff/", views.compare_config, name="compare_config"),
     path("config/<int:config_id>/download/", views.download_config, name="download_config"),
 
+    #path('config/<int:config_id>/', views.view_config, name='view_config'),
+   # path("config/<int:config_id>/download/", views.download_config, name="download_config"),
     path('compare/<int:config_id>/', views.compare_config, name='compare_config'),
     path("statistics/", views.BackupStatisticsView.as_view(), name="backup_statistics"),
     path("view/<int:config_id>/", views.view_config, name="view_config"),
     path("compare/<int:config_id>/", views.compare_config, name="compare_config"),
     path("download/<int:config_id>/", views.download_config, name="download_config"),
-   path("settings/", views.BackupSettingsListView.as_view(), name="backup_settings_list"),
-       path("settings/add/", views.BackupSettingsCreateView.as_view(), name="backup_settings_add"),
-       path("settings/<int:pk>/edit/", views.BackupSettingsEditView.as_view(), name="backup_settings_edit"),
-       path("settings/<int:pk>/delete/", views.BackupSettingsDeleteView.as_view(), name="backup_settings_delete"),
+
+    path("templates/", views.BackupTemplatesListView.as_view(), name="backup_templates_list"),
+    path("templates/add/", views.BackupTemplatesCreateView.as_view(), name="backup_templates_add"),
+    path("templates/<int:pk>/edit/", views.BackupTemplatesEditView.as_view(), name="backup_templates_edit"),
+    path("templates/<int:pk>/delete/", views.BackupTemplatesDeleteView.as_view(), name="backup_templates_delete"),
+
+    #path("settings/", views.BackupSettingsListView.as_view(), name="backup_settings_list"),
+   # path("settings/add/", views.BackupSettingsCreateView.as_view(), name="backup_settings_add"),
+    #path("settings/<int:pk>/edit/", views.BackupSettingsEditView.as_view(), name="backup_settings_edit"),
+    #path("settings/<int:pk>/delete/", views.BackupSettingsDeleteView.as_view(), name="backup_settings_delete"),
 
 ]
