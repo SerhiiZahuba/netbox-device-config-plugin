@@ -73,7 +73,7 @@ class BackupTemplatesDeleteView(View):
         setting.delete()
         return redirect("plugins:netbox_device_config:backup_templates_list")
 
-
+        
 
 @register_model_view(Device, name="config", path="config")
 class DeviceConfigTabView(generic.ObjectView):
@@ -319,7 +319,7 @@ class DeviceCredentialListView(View):
     """
     def get(self, request):
         creds = DeviceCredential.objects.all()
-        return render(request, 'netbox_device_config/credentials_list.html', {
+        return render(request, 'netbox_device_config/device_list.html', {
             'table': creds,
         })
 
