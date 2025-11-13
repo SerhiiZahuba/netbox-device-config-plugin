@@ -5,12 +5,23 @@ from dcim.models import Platform
 
 
 class BackupCommandSetting(models.Model):
-    vendor = models.CharField(max_length=100, unique=True, help_text="Device type or vendor name, e.g. Mikrotik, Cisco, Juniper")
-    command = models.CharField(max_length=255, help_text="CLI command for backup, e.g. 'export compact' or 'show running-config'")
+    vendor = models.CharField(
+        max_length=100,
+        unique=True,
+        help_text="Device type or vendor name, e.g. Mikrotik, Cisco, Juniper"
+    )
+    commands = models.TextField(
+        help_text="One or more backup commands, separated by new lines."
+    )
     notes = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return f"{self.vendor} — {self.command}"
+        return f"{self.vendor}"
+
+    def get_command_list(self):
+        """Return list of commands (split by newlines, ignoring empty lines)."""
+        return [cmd.strip() for cmd in self.commands.splitlines() if cmd.strip()]
+
 
 class DeviceCredential(models.Model):
     device = models.OneToOneField(Device, on_delete=models.CASCADE)
