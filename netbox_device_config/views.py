@@ -15,7 +15,67 @@ from django.utils.timezone import now, localdate
 from django.http import HttpResponse
 from netbox.views import generic
 from utilities.views import ViewTab, register_model_view
+import time
 
+
+
+class BackupTasksListView(View):
+    def get(self, request):
+        results = TaskResult.objects.filter(task_name="netbox_device_config.tasks.run_device_backup")\
+                                    .order_by("-date_created")[:50]
+
+        tasks = []
+        for r in results:
+            data = r.result or "{}"
+            try:
+                data = eval(data)
+            except:
+                data = {"status": "unknown"}
+
+            tasks.append({
+                "status": data.get("status", r.status),
+                "device": data.get("device", "-"),
+                "host": data.get("host", "-"),
+                "error": data.get("error", None),
+            })
+
+        return render(request, "netbox_device_config/tasks_list.html", {"tasks": tasks})
+
+
+def run_multicommand_backup(cred):
+    commands = cred.template.commands.splitlines()
+    output = ""
+
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    client.connect(
+        hostname=cred.host,
+        port=cred.port,
+        username=cred.username,
+        password=cred.password,
+        timeout=10
+    )
+
+    # interactive shell
+    chan = client.invoke_shell()
+    time.sleep(0.7)  # give device time to open channel
+
+    # run commands sequentially
+    for cmd in commands:
+        if not cmd.strip():
+            continue
+        chan.send(cmd + "\n")
+        time.sleep(1.0)
+
+    # read all output
+    time.sleep(1.5)
+    while chan.recv_ready():
+        output += chan.recv(999999).decode("utf-8", errors="ignore")
+
+    chan.close()
+    client.close()
+
+    return output
 
 
 
@@ -27,42 +87,53 @@ class BackupTemplatesListView(View):
 
 
 class BackupTemplatesCreateView(View):
-    """Add new vendor command"""
+    """Add new vendor command template"""
     def get(self, request):
         return render(request, "netbox_device_config/templates/templates_add.html")
 
     def post(self, request):
-        vendor = request.POST.get("vendor")
-        command = request.POST.get("command")
-        notes = request.POST.get("notes")
+        vendor = request.POST.get("vendor", "").strip()
+        commands = request.POST.get("commands", "").strip()
+        notes = request.POST.get("notes", "").strip()
 
-        if not vendor or not command:
-            messages.error(request, "Vendor and command are required.")
+        if not vendor or not commands:
+            messages.error(request, "Vendor and commands are required.")
             return redirect("plugins:netbox_device_config:backup_templates_add")
 
         BackupCommandSetting.objects.create(
-            vendor=vendor.strip(),
-            command=command.strip(),
-            notes=notes.strip() if notes else None,
+            vendor=vendor,
+            commands=commands,   # <----- FIXED
+            notes=notes if notes else None,
         )
-        messages.success(request, f"Added backup command for {vendor}")
+
+        messages.success(request, f"Added backup commands for {vendor}")
         return redirect("plugins:netbox_device_config:backup_templates_list")
 
 
 class BackupTemplatesEditView(View):
-    """Edit existing vendor command"""
+    """Edit existing vendor command template"""
     def get(self, request, pk):
         setting = get_object_or_404(BackupCommandSetting, pk=pk)
-        return render(request, "netbox_device_config/templates/templates_edit.html", {"setting": setting})
+        return render(request, "netbox_device_config/templates/templates_edit.html", {
+            "setting": setting
+        })
 
     def post(self, request, pk):
         setting = get_object_or_404(BackupCommandSetting, pk=pk)
-        setting.vendor = request.POST.get("vendor")
-        setting.command = request.POST.get("command")
-        setting.notes = request.POST.get("notes")
+
+        setting.vendor = request.POST.get("vendor", "").strip()
+        setting.commands = request.POST.get("commands", "").strip()   # <----- FIXED
+        setting.notes = request.POST.get("notes", "").strip()
+
+        if not setting.vendor or not setting.commands:
+            messages.error(request, "Vendor and commands are required.")
+            return redirect("plugins:netbox_device_config:backup_templates_edit", pk=pk)
+
         setting.save()
-        messages.success(request, f"Updated backup command for {setting.vendor}")
+
+        messages.success(request, f"Updated backup commands for {setting.vendor}")
         return redirect("plugins:netbox_device_config:backup_templates_list")
+
 
 
 class BackupTemplatesDeleteView(View):
@@ -178,51 +249,20 @@ def compare_config(request, config_id):
         'diff': diff or 'No previous config found',
     })
 
+
+
+
 class DeviceCredentialBackupView(View):
-    """
-    Connect to MikroTik via SSH and run 'export compact'
-    """
+
     def get(self, request, pk):
-        cred = DeviceCredential.objects.get(pk=pk)
-        output = ""
+        job = BackupJob()
+        job.enqueue(device_id=pk)
 
-        try:
-            client = paramiko.SSHClient()
-            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            client.connect(
-                hostname=cred.host,
-                port=cred.port,
-                username=cred.username,
-                password=cred.password,
-                timeout=10
-            )
-
-            command = cred.template.command if cred.template else "export compact"
-            stdin, stdout, stderr = client.exec_command(command)
-            output = stdout.read().decode("utf-8", errors="ignore")
-            err = stderr.read().decode("utf-8", errors="ignore")
-
-            if not output.strip() and err:
-                raise Exception(err.strip())
-
-            # save to history
-            DeviceConfigHistory.objects.create(
-                device=cred.device,
-                config=output,
-                size=len(output.encode("utf-8")),
-                created_at=timezone.now(),
-            )
-
-            messages.success(request, f"Backup successful for {cred.device.name} ({cred.host})")
-        except Exception as e:
-            messages.error(request, f"Backup failed: {e}")
-        finally:
-            try:
-                client.close()
-            except:
-                pass
-
+        messages.success(request, "Backup task queued. Check Jobs → Background Tasks.")
         return redirect("plugins:netbox_device_config:devicecredential_list")
+
+
+
 
 class DeviceCredentialTestView(View):
     """
