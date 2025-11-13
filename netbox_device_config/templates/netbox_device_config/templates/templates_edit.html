@@ -9,10 +9,12 @@
         <input type="text" name="vendor" class="form-control" value="{{ setting.vendor }}" required>
     </div>
 
-    <div class="mb-3">
-        <label class="form-label">Backup Command</label>
-        <input type="text" name="command" class="form-control" value="{{ setting.command }}" required>
+    <div class="form-group">
+        <label for="commands">Backup Commands (one per line):</label>
+        <textarea name="commands" id="commands" rows="4" class="form-control">{{ setting.commands }}</textarea>
     </div>
+
+
 
     <div class="mb-3">
         <label class="form-label">Notes</label>
