@@ -1,0 +1,44 @@
+{% extends 'base/layout.html' %}
+{% block content %}
+<h2>Backup Task History</h2>
+
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th>Device</th>
+        <th>Status</th>
+        <th>Queued</th>
+        <th>Started</th>
+        <th>Finished</th>
+        <th>Duration</th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for t in tasks %}
+    <tr>
+        <td>{{ t.device }}</td>
+        <td>
+            {% if t.status == "success" %}
+            <span class="badge bg-success">Success</span>
+            {% elif t.status == "error" %}
+            <span class="badge bg-danger">Error</span>
+            {% elif t.status == "running" %}
+            <span class="badge bg-warning">Running</span>
+            {% else %}
+            <span class="badge bg-secondary">Queued</span>
+            {% endif %}
+        </td>
+        <td>{{ t.queued_at }}</td>
+        <td>{{ t.started_at|default:"-" }}</td>
+        <td>{{ t.finished_at|default:"-" }}</td>
+        <td>{{ t.duration|default:"-" }}</td>
+        <td>
+            <a href="{% url 'plugins:netbox_device_config:task_detail' t.id %}" class="btn btn-sm btn-primary">View</a>
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}
