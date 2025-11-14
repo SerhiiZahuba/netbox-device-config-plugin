@@ -68,7 +68,7 @@
                 <th>Duration</th>
                 <td>
                     {% if task.duration %}
-                    {{ task.duration }} seconds
+                    {{ task.duration|floatformat:2 }} seconds
                     {% else %}
                     -
                     {% endif %}
@@ -78,6 +78,17 @@
         </table>
     </div>
 </div>
+
+{% if task.log %}
+<div class="card mb-4">
+    <div class="card-header">
+        <strong>Execution Log</strong>
+    </div>
+    <div class="card-body">
+        <pre style="white-space: pre-wrap;">{{ task.log }}</pre>
+    </div>
+</div>
+{% endif %}
 
 
 {% if task.error_message %}
