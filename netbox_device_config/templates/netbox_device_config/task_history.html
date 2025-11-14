@@ -26,7 +26,8 @@
             {% elif t.status == "running" %}
             <span class="badge bg-warning">Running</span>
             {% else %}
-            <span class="badge bg-secondary">Queued</span>
+            <span class="badge bg-secondary text-white">Queued</span>
+
             {% endif %}
         </td>
         <td>{{ t.queued_at }}</td>
