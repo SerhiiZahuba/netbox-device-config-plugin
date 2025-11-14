@@ -16,6 +16,8 @@ from django.http import HttpResponse
 from netbox.views import generic
 from utilities.views import ViewTab, register_model_view
 import time
+from .models import DeviceBackupTask
+from .tasks import run_backup_task
 
 
 
@@ -250,16 +252,36 @@ def compare_config(request, config_id):
     })
 
 
+class BackupTaskListView(View):
+    def get(self, request):
+        tasks = DeviceBackupTask.objects.order_by("-queued_at")[:200]
+        return render(request, "netbox_device_config/task_history.html", {
+            "tasks": tasks
+        })
+
+class BackupTaskDetailView(View):
+    def get(self, request, pk):
+        task = get_object_or_404(DeviceBackupTask, pk=pk)
+        return render(request, "netbox_device_config/task_detail.html", {
+            "task": task
+        })
 
 
 class DeviceCredentialBackupView(View):
-
     def get(self, request, pk):
-        job = BackupJob()
-        job.enqueue(device_id=pk)
 
-        messages.success(request, "Backup task queued. Check Jobs → Background Tasks.")
-        return redirect("plugins:netbox_device_config:devicecredential_list")
+        cred = DeviceCredential.objects.get(pk=pk)
+
+        task = DeviceBackupTask.objects.create(
+            device=cred.device,
+            credential=cred,
+            status="queued"
+        )
+
+        run_backup_task.delay(task.id)
+
+        messages.success(request, "Backup queued!")
+        return redirect("plugins:netbox_device_config:task_history")
 
 
 
