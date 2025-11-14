@@ -1,5 +1,9 @@
 from django.urls import path
 from . import views
+from .views import (
+    BackupTaskListView,
+    BackupTaskDetailView,
+)
 
 app_name = 'netbox_device_config'
 
@@ -29,9 +33,6 @@ urlpatterns = [
     path("templates/<int:pk>/edit/", views.BackupTemplatesEditView.as_view(), name="backup_templates_edit"),
     path("templates/<int:pk>/delete/", views.BackupTemplatesDeleteView.as_view(), name="backup_templates_delete"),
 
-    #path("settings/", views.BackupSettingsListView.as_view(), name="backup_settings_list"),
-   # path("settings/add/", views.BackupSettingsCreateView.as_view(), name="backup_settings_add"),
-    #path("settings/<int:pk>/edit/", views.BackupSettingsEditView.as_view(), name="backup_settings_edit"),
-    #path("settings/<int:pk>/delete/", views.BackupSettingsDeleteView.as_view(), name="backup_settings_delete"),
-
+    path("tasks/", BackupTaskListView.as_view(), name="task_history"),
+    path("tasks/<int:pk>/", BackupTaskDetailView.as_view(), name="task_detail"),
 ]
