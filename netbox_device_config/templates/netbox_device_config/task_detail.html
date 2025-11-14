@@ -1,0 +1,94 @@
+{% extends 'base/layout.html' %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Backup Task #{{ task.id }}</h1>
+
+    <a href="{% url 'plugins:netbox_device_config:task_history' %}" class="btn btn-sm btn-secondary">
+        ← Back to Task History
+    </a>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <strong>Task Information</strong>
+    </div>
+    <div class="card-body">
+
+        <table class="table table-sm">
+            <tr>
+                <th style="width: 20%">Device</th>
+                <td>
+                    <a href="{{ task.device.get_absolute_url }}">{{ task.device }}</a>
+                </td>
+            </tr>
+
+            <tr>
+                <th>Status</th>
+                <td>
+                    {% if task.status == "success" %}
+                    <span class="badge bg-success">Success</span>
+                    {% elif task.status == "error" %}
+                    <span class="badge bg-danger">Error</span>
+                    {% elif task.status == "running" %}
+                    <span class="badge bg-warning text-dark">Running</span>
+                    {% else %}
+                    <span class="badge bg-secondary">Queued</span>
+                    {% endif %}
+                </td>
+            </tr>
+
+            <tr>
+                <th>Credential</th>
+                <td>
+                    {% if task.credential %}
+                    {{ task.credential.host }} ({{ task.credential.username }})
+                    {% else %}
+                    <span class="text-muted">None</span>
+                    {% endif %}
+                </td>
+            </tr>
+
+            <tr>
+                <th>Queued At</th>
+                <td>{{ task.queued_at }}</td>
+            </tr>
+
+            <tr>
+                <th>Started At</th>
+                <td>{{ task.started_at|default:"-" }}</td>
+            </tr>
+
+            <tr>
+                <th>Finished At</th>
+                <td>{{ task.finished_at|default:"-" }}</td>
+            </tr>
+
+            <tr>
+                <th>Duration</th>
+                <td>
+                    {% if task.duration %}
+                    {{ task.duration }} seconds
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
+            </tr>
+
+        </table>
+    </div>
+</div>
+
+
+{% if task.error_message %}
+<div class="card border-danger mb-4">
+    <div class="card-header bg-danger text-white">
+        <strong>Error Details</strong>
+    </div>
+    <div class="card-body">
+        <pre class="text-danger mb-0">{{ task.error_message }}</pre>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
