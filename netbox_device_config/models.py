@@ -32,6 +32,7 @@ class DeviceBackupTask(models.Model):
     duration = models.FloatField(null=True, blank=True)
 
     error_message = models.TextField(blank=True, null=True)
+    log = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f"Backup {self.device} ({self.status})"
