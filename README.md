@@ -28,6 +28,8 @@ The plugin uses **Paramiko (SSH)** to connect to devices and retrieve configurat
 ```bash
 cd /opt/netbox/netbox/
 source ../venv/bin/activate
+python3 -m pip install paramiko
+
 
 Add the plugin to your NetBox configuration file (configuration.py):
 
