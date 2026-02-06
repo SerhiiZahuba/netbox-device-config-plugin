@@ -5,19 +5,24 @@ from dcim.models import Device, Platform
 import paramiko
 from django.contrib import messages
 from django.utils import timezone
-from .models import DeviceCredential, DeviceConfigHistory, DeviceConfigHistory
+#from .models import DeviceCredential, DeviceConfigHistory, DeviceConfigHistory, GitSettings
+from .models import DeviceCredential, GitSettings
 import difflib
 from datetime import datetime
 from django.http import HttpResponse
-from .models import DeviceConfigHistory
+#from .models import DeviceConfigHistory
 from django.db.models import Sum, Count
 from django.utils.timezone import now, localdate
 from django.http import HttpResponse
 from netbox.views import generic
 from utilities.views import ViewTab, register_model_view
 import time
+import subprocess
 from .models import DeviceBackupTask
 from .tasks import run_backup_task
+
+
+
 
 
 
@@ -150,23 +155,17 @@ class BackupTemplatesDeleteView(View):
 
 @register_model_view(Device, name="config", path="config")
 class DeviceConfigTabView(generic.ObjectView):
-    """
-    Tab "Config"
-    """
+
     queryset = Device.objects.all()
 
     tab = ViewTab(
         label="Config",
-        badge=lambda obj: DeviceConfigHistory.objects.filter(device=obj).count(),
-        permission="netbox_device_config.view_deviceconfighistory",
+        badge=None,
+        permission="dcim.view_device",
     )
 
     def get(self, request, *args, **kwargs):
         device = get_object_or_404(Device, pk=kwargs.get("pk"))
-        history = (
-            DeviceConfigHistory.objects.filter(device=device)
-            .order_by("-created_at")[:20]
-        )
 
         return render(
             request,
@@ -174,27 +173,17 @@ class DeviceConfigTabView(generic.ObjectView):
             {
                 "object": device,
                 "tab": self.tab,
-                "history": history,
             },
         )
 
-def _human_size(num):
-    if num < 1024:
-        return f"{num} B"
-    elif num < 1024 * 1024:
-        return f"{num / 1024:.1f} KB"
-    elif num < 1024 * 1024 * 1024:
-        return f"{num / (1024 * 1024):.1f} MB"
-    else:
-        return f"{num / (1024 * 1024 * 1024):.2f} GB"
 
 class BackupStatisticsView(View):
     def get(self, request):
         today = localdate(now())
 
-        total_backups = DeviceConfigHistory.objects.count()
-        today_backups = DeviceConfigHistory.objects.filter(created_at__date=today).count()
-        total_size_raw = DeviceConfigHistory.objects.aggregate(total_size=Sum("size"))["total_size"] or 0
+      #  total_backups = DeviceConfigHistory.objects.count()
+      #  today_backups = DeviceConfigHistory.objects.filter(created_at__date=today).count()
+     #   total_size_raw = DeviceConfigHistory.objects.aggregate(total_size=Sum("size"))["total_size"] or 0
 
         total_size = _human_size(total_size_raw)
 
@@ -403,10 +392,8 @@ class DeviceConfigHistoryListView(View):
             'table': history,
         })
 
-import re
-from django.views import View
-from django.shortcuts import render
-from .models import DeviceConfigHistory
+
+
 
 
 class ConfigSearchView(View):
@@ -448,3 +435,78 @@ class ConfigSearchView(View):
             "q": q,
             "results": results[:200],
         })
+
+
+class GitSettingsView(View):
+
+    def get(self, request):
+        settings = GitSettings.objects.first()
+        return render(request, "netbox_device_config/git_settings.html", {
+            "settings": settings
+        })
+
+    def post(self, request):
+        obj, _ = GitSettings.objects.get_or_create(id=1)
+
+        obj.repo_url = request.POST.get("repo_url")
+        obj.branch = request.POST.get("branch")
+        obj.local_path = request.POST.get("local_path")
+        obj.ssh_key_path = request.POST.get("ssh_key_path")
+        obj.enabled = bool(request.POST.get("enabled"))
+
+        obj.save()
+
+        messages.success(request, "Git settings saved")
+        return redirect("plugins:netbox_device_config:git_settings")
+
+
+
+
+class DeviceGitDiffView(View):
+
+    def get(self, request, device_id):
+
+        device = get_object_or_404(Device, id=device_id)
+        settings = GitSettings.objects.first()
+
+        repo = settings.local_path
+        filename = f"{device.name}.cfg"
+
+        try:
+            diff = subprocess.check_output(
+                f"git diff HEAD~1 {filename}",
+                shell=True,
+                cwd=repo
+            ).decode(errors="ignore")
+        except Exception:
+            diff = "No previous diff available"
+
+        return render(request, "netbox_device_config/git_diff.html", {
+            "device": device,
+            "diff": diff
+        })
+
+
+class DeviceGitShowView(View):
+
+    def get(self, request, device_id):
+
+        device = get_object_or_404(Device, id=device_id)
+        settings = GitSettings.objects.first()
+
+        path = f"{settings.local_path}/{device.name}.cfg"
+
+        try:
+            with open(path) as f:
+                data = f.read()
+        except:
+            data = "Config not found in git repo"
+
+        return render(
+            request,
+            "netbox_device_config/git_config_view.html",
+            {
+                "device": device,
+                "config": data,
+            },
+        )
