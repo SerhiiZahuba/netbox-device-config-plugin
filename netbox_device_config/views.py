@@ -402,3 +402,49 @@ class DeviceConfigHistoryListView(View):
         return render(request, 'netbox_device_config/history_list.html', {
             'table': history,
         })
+
+import re
+from django.views import View
+from django.shortcuts import render
+from .models import DeviceConfigHistory
+
+
+class ConfigSearchView(View):
+
+    def get(self, request):
+
+        q = request.GET.get("q", "").strip()
+        results = []
+
+        if q:
+
+            backups = (
+                DeviceConfigHistory.objects
+                .select_related("device")
+                .order_by("-created_at")[:500]
+            )
+
+            for b in backups:
+
+                lines = b.config.splitlines()
+
+                for i, line in enumerate(lines):
+
+                    if q.lower() in line.lower():
+
+                        start = max(i - 2, 0)
+                        end = min(i + 3, len(lines))
+
+                        snippet = "\n".join(lines[start:end])
+
+                        results.append({
+                            "device": b.device,
+                            "backup_id": b.id,
+                            "date": b.created_at,
+                            "snippet": snippet,
+                        })
+
+        return render(request, "netbox_device_config/config_search.html", {
+            "q": q,
+            "results": results[:200],
+        })
