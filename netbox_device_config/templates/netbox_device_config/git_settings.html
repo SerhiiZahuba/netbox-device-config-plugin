@@ -1,0 +1,35 @@
+{% extends 'base/layout.html' %}
+{% block content %}
+
+<h1>Git Settings</h1>
+
+<form method="post" class="card card-body">
+    {% csrf_token %}
+
+    <label>Repo URL</label>
+    <input name="repo_url" class="form-control mb-2"
+           value="{{ settings.repo_url|default:'' }}">
+
+    <label>Branch</label>
+    <input name="branch" class="form-control mb-2"
+           value="{{ settings.branch|default:'main' }}">
+
+    <label>Local path</label>
+    <input name="local_path" class="form-control mb-2"
+           value="{{ settings.local_path|default:'/opt/netbox/git-configs' }}">
+
+    <label>SSH key path</label>
+    <input name="ssh_key_path" class="form-control mb-2"
+           value="{{ settings.ssh_key_path|default:'/opt/netbox/.ssh/id_rsa' }}">
+
+    <div class="form-check mt-2">
+        <input type="checkbox" name="enabled" class="form-check-input"
+               {% if settings and settings.enabled %}checked{% endif %}>
+        <label class="form-check-label">Enable git backups</label>
+    </div>
+
+    <button class="btn btn-primary mt-3">Save</button>
+
+</form>
+
+{% endblock %}
