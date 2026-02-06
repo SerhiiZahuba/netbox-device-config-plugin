@@ -367,19 +367,20 @@ class DeviceCredentialEditView(View):
 
 
 class DeviceCredentialListView(View):
+
     def get(self, request):
 
         creds = (
             DeviceCredential.objects
             .select_related("device", "template")
-            .annotate(
-                backups_count=Count("device__deviceconfighistory")
-            )
+            .order_by("device__name")
         )
 
-        return render(request, 'netbox_device_config/device_list.html', {
-            'table': creds,
-        })
+        return render(
+            request,
+            'netbox_device_config/device_list.html',
+            {"table": creds}
+        )
 
 
 class DeviceConfigHistoryListView(View):
