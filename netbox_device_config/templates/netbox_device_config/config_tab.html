@@ -1,0 +1,31 @@
+<div class="card">
+    <div class="card-header"><strong>Config Backups</strong></div>
+    <div class="card-body">
+        {% if history %}
+        <table class="table table-hover">
+            <thead>
+            <tr>
+                <th>Created</th>
+                <th>Size</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for h in history %}
+            <tr>
+                <td>{{ h.created_at|date:"Y-m-d H:i" }}</td>
+                <td>{{ h.config|length|filesizeformat }}</td>
+                <td>
+                    <a href="{% url 'plugins:netbox_device_config:view_config' h.id %}" class="btn btn-primary btn-sm">View</a>
+                    <a href="{% url 'plugins:netbox_device_config:compare_config' h.id %}" class="btn btn-secondary btn-sm">Diff</a>
+                    <a href="{% url 'plugins:netbox_device_config:download_config' h.id %}" class="btn btn-success btn-sm">Download</a>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>No backups found for this device.</p>
+        {% endif %}
+    </div>
+</div>
