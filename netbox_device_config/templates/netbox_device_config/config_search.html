@@ -1,0 +1,53 @@
+{% extends 'base/layout.html' %}
+{% block content %}
+
+<h1>Search configs</h1>
+
+<form method="get" class="card card-body mb-3">
+
+    <div class="input-group">
+        <input type="text" name="q" value="{{ q }}" class="form-control form-control-lg"
+               placeholder="search in configs: vlan, ospf, route, ip...">
+
+        <button class="btn btn-primary btn-lg">
+            Search
+        </button>
+    </div>
+
+</form>
+
+{% if q %}
+<div class="text-muted mb-2">
+    Found: {{ results|length }}
+</div>
+{% endif %}
+
+{% for r in results %}
+<div class="card mb-3">
+
+    <div class="card-header d-flex justify-content-between">
+        <div>
+            <strong>{{ r.device }}</strong>
+            <span class="text-muted ms-2">{{ r.date }}</span>
+        </div>
+
+        <div>
+            <a href="/plugins/device-config/config/{{ r.backup_id }}/"
+               class="btn btn-sm btn-primary">
+                Open backup
+            </a>
+        </div>
+    </div>
+
+    <div class="card-body">
+        <pre style="margin:0; font-size:13px;">{{ r.snippet }}</pre>
+    </div>
+
+</div>
+{% empty %}
+{% if q %}
+<div class="text-muted">Nothing found</div>
+{% endif %}
+{% endfor %}
+
+{% endblock %}
