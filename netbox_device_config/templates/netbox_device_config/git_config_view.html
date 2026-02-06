@@ -1,0 +1,36 @@
+{% extends 'base/layout.html' %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Config: {{ device }}</h2>
+
+    <div>
+        <a href="/dcim/devices/{{ device.id }}/?tab=config"
+           class="btn btn-secondary btn-sm">
+            ← Back
+        </a>
+
+        <a href="/plugins/device-config/device/{{ device.id }}/diff/"
+           class="btn btn-warning btn-sm">
+            Show diff
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+
+<pre style="
+    background:#111;
+    color:#ddd;
+    padding:15px;
+    font-size:13px;
+    line-height:1.4;
+    border-radius:6px;
+    overflow:auto;
+">{{ config }}</pre>
+
+    </div>
+</div>
+
+{% endblock %}
