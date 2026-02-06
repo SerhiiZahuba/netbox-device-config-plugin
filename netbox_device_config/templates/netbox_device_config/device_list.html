@@ -32,13 +32,8 @@
             {% endif %}
         </td>
         <td>
-            {% if c.backups_count == 0 %}
-            <span class="badge text-bg-red">0</span>
-            {% elif c.backups_count < 3 %}
-            <span class="badge text-bg-yellow">{{ c.backups_count }}</span>
-            {% else %}
-            <span class="badge text-bg-green">{{ c.backups_count }}</span>
-            {% endif %}
+            <span class="text-muted">git</span>
+
         </td>
 
 
