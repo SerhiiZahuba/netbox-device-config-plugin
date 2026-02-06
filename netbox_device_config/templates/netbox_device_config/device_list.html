@@ -13,6 +13,7 @@
         <th>Port</th>
         <th>Username</th>
         <th>Template</th>
+        <th>Backups</th>
         <th class="text-end">Actions</th>
     </tr>
     </thead>
@@ -30,6 +31,17 @@
             <span class="text-muted">—</span>
             {% endif %}
         </td>
+        <td>
+            {% if c.backups_count == 0 %}
+            <span class="badge text-bg-red">0</span>
+            {% elif c.backups_count < 3 %}
+            <span class="badge text-bg-yellow">{{ c.backups_count }}</span>
+            {% else %}
+            <span class="badge text-bg-green">{{ c.backups_count }}</span>
+            {% endif %}
+        </td>
+
+
         <td class="text-end">
             <a href="{% url 'plugins:netbox_device_config:devicecredential_edit' c.id %}" class="btn btn-sm btn-outline-primary">Edit</a>
             <a href="{% url 'plugins:netbox_device_config:devicecredential_test' c.id %}" class="btn btn-sm btn-outline-success">Test</a>
