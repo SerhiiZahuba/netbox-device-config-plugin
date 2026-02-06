@@ -35,4 +35,6 @@ urlpatterns = [
 
     path("tasks/", BackupTaskListView.as_view(), name="task_history"),
     path("tasks/<int:pk>/", BackupTaskDetailView.as_view(), name="task_detail"),
+    #search menu
+    path("search/", views.ConfigSearchView.as_view(), name="config_search"),
 ]
