@@ -11,8 +11,8 @@ import difflib
 from datetime import datetime
 from django.http import HttpResponse
 #from .models import DeviceConfigHistory
-from django.db.models import Sum, Count
-from django.utils.timezone import now, localdate
+from django.db.models import Sum, Count, Max
+from django.utils.timezone import now, localdate, timedelta
 from django.http import HttpResponse
 from netbox.views import generic
 from utilities.views import ViewTab, register_model_view
@@ -22,6 +22,14 @@ from .models import DeviceBackupTask
 from .tasks import run_backup_task
 
 
+
+
+
+#from django.utils.timezone import now, timedelta
+#from django.shortcuts import render
+#from dcim.models import Device
+#from .models import DeviceBackupTask
+#from django.db.models import Count
 
 
 
@@ -179,21 +187,57 @@ class DeviceConfigTabView(generic.ObjectView):
 
 class BackupStatisticsView(View):
     def get(self, request):
-        today = localdate(now())
 
-      #  total_backups = DeviceConfigHistory.objects.count()
-      #  today_backups = DeviceConfigHistory.objects.filter(created_at__date=today).count()
-     #   total_size_raw = DeviceConfigHistory.objects.aggregate(total_size=Sum("size"))["total_size"] or 0
+        today = now().date()
+        yesterday = now() - timedelta(days=1)
 
-        total_size = _human_size(total_size_raw)
+        total_devices = Device.objects.count()
 
-        failed_backups = 0
+        total_backups = DeviceBackupTask.objects.filter(status="success").count()
+
+        today_backups = (
+            DeviceBackupTask.objects
+            .filter(status="success", finished_at__date=today)
+            .count()
+        )
+
+        failed_backups = DeviceBackupTask.objects.filter(status="error").count()
+
+        # останній backup по кожному девайсу
+        last_backups = (
+            DeviceBackupTask.objects
+            .filter(status="success")
+            .values("device")
+            .annotate(last_time=Max("finished_at"))
+        )
+
+
+
+        devices_with_backup = last_backups.count()
+        devices_without_backup = total_devices - devices_with_backup
+
+        # старі backup >24h
+        stale_devices = Device.objects.exclude(
+            id__in=DeviceBackupTask.objects.filter(
+                status="success",
+                finished_at__gte=yesterday
+            ).values_list("device_id", flat=True)
+        ).count()
+
+        last_tasks = (
+            DeviceBackupTask.objects
+            .select_related("device")
+            .order_by("-id")[:20]
+        )
 
         return render(request, "netbox_device_config/statistics.html", {
-            "today_backups": today_backups,
+            "total_devices": total_devices,
             "total_backups": total_backups,
-            "total_size": total_size,
+            "today_backups": today_backups,
             "failed_backups": failed_backups,
+            "devices_without_backup": devices_without_backup,
+            "stale_devices": stale_devices,
+            "last_tasks": last_tasks,
         })
 
 
