@@ -185,7 +185,11 @@ class DeviceConfigTabView(generic.ObjectView):
         )
 
 
+
+
+
 class BackupStatisticsView(View):
+
     def get(self, request):
 
         today = now().date()
@@ -203,7 +207,7 @@ class BackupStatisticsView(View):
 
         failed_backups = DeviceBackupTask.objects.filter(status="error").count()
 
-        # останній backup по кожному девайсу
+        # last backup per device
         last_backups = (
             DeviceBackupTask.objects
             .filter(status="success")
@@ -211,12 +215,10 @@ class BackupStatisticsView(View):
             .annotate(last_time=Max("finished_at"))
         )
 
-
-
         devices_with_backup = last_backups.count()
         devices_without_backup = total_devices - devices_with_backup
 
-        # старі backup >24h
+        # no backup >24h
         stale_devices = Device.objects.exclude(
             id__in=DeviceBackupTask.objects.filter(
                 status="success",
@@ -224,11 +226,22 @@ class BackupStatisticsView(View):
             ).values_list("device_id", flat=True)
         ).count()
 
-        last_tasks = (
+        # ===== FILTERS =====
+        filter_status = request.GET.get("status")
+
+        tasks_qs = (
             DeviceBackupTask.objects
             .select_related("device")
-            .order_by("-id")[:20]
+            .order_by("-id")
         )
+
+        if filter_status == "fail":
+            tasks_qs = tasks_qs.filter(status="error")
+
+        elif filter_status == "ok":
+            tasks_qs = tasks_qs.filter(status="success")
+
+        last_tasks = tasks_qs[:50]
 
         return render(request, "netbox_device_config/statistics.html", {
             "total_devices": total_devices,
@@ -238,7 +251,10 @@ class BackupStatisticsView(View):
             "devices_without_backup": devices_without_backup,
             "stale_devices": stale_devices,
             "last_tasks": last_tasks,
+            "filter_status": filter_status,
         })
+
+
 
 
 def download_config(request, config_id):
