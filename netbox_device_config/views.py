@@ -375,15 +375,23 @@ class DeviceCredentialEditView(View):
         return redirect("plugins:netbox_device_config:devicecredential_list")
 
 
+
+
 class DeviceCredentialListView(View):
-    """
-    Show all stored device credentials.
-    """
     def get(self, request):
-        creds = DeviceCredential.objects.all()
+
+        creds = (
+            DeviceCredential.objects
+            .select_related("device", "template")
+            .annotate(
+                backups_count=Count("device__deviceconfighistory")
+            )
+        )
+
         return render(request, 'netbox_device_config/device_list.html', {
             'table': creds,
         })
+
 
 class DeviceConfigHistoryListView(View):
     """
