@@ -73,6 +73,29 @@
     <div class="card-header"><strong>Last backup tasks</strong></div>
     <div class="card-body">
 
+
+
+        <div class="d-flex gap-2 mb-3">
+
+            <a href="?status=all"
+               class="btn btn-sm {% if not filter_status or filter_status == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                All
+            </a>
+
+            <a href="?status=ok"
+               class="btn btn-sm {% if filter_status == 'ok' %}btn-success{% else %}btn-outline-success{% endif %}">
+                OK only
+            </a>
+
+            <a href="?status=fail"
+               class="btn btn-sm {% if filter_status == 'fail' %}btn-danger{% else %}btn-outline-danger{% endif %}">
+                FAIL only
+            </a>
+
+        </div>
+
+
+
         <table class="table table-sm table-hover">
             <thead>
             <tr>
