@@ -34,6 +34,8 @@ class DeviceBackupTask(models.Model):
     error_message = models.TextField(blank=True, null=True)
     log = models.TextField(blank=True, null=True)
 
+    git_commit = models.CharField(max_length=64, blank=True, null=True)
+
     def __str__(self):
         return f"Backup {self.device} ({self.status})"
 
@@ -78,24 +80,25 @@ class DeviceCredential(models.Model):
         return f"{self.device.name} ({self.host})"
 
 
-class DeviceConfigHistory(models.Model):
-    device = models.ForeignKey(Device, on_delete=models.CASCADE)
-    config = models.TextField()
-    size = models.IntegerField(default=0)
-    created_at = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
-        ordering = ['-created_at']
+
+
+
+class GitSettings(models.Model):
+    repo_url = models.CharField(max_length=500)
+    branch = models.CharField(max_length=100, default="main")
+
+    local_path = models.CharField(
+        max_length=300,
+        default="/opt/netbox/git-configs"
+    )
+
+    ssh_key_path = models.CharField(
+        max_length=300,
+        default="/opt/netbox/.ssh/id_rsa"
+    )
+
+    enabled = models.BooleanField(default=True)
 
     def __str__(self):
-        return f"{self.device.name} ({self.created_at})"
-
-    def human_size(self):
-        
-        if self.size < 1024:
-            return f"{self.size} B"
-        elif self.size < 1024 * 1024:
-            return f"{self.size / 1024:.1f} KB"
-        else:
-            return f"{self.size / (1024 * 1024):.1f} MB"
-
+        return self.repo_url
