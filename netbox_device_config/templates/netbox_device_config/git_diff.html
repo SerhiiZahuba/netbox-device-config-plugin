@@ -1,0 +1,14 @@
+{% extends 'base/layout.html' %}
+{% block content %}
+
+<h1>Config diff: {{ device }}</h1>
+
+<div class="card">
+    <div class="card-body">
+
+        <pre style="font-size:13px; line-height:1.4">{{ diff }}</pre>
+
+    </div>
+</div>
+
+{% endblock %}
