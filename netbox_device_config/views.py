@@ -21,7 +21,7 @@ import subprocess
 from .models import DeviceBackupTask
 from .tasks import run_backup_task
 
-
+from .models import BackupSchedule
 
 
 
@@ -571,3 +571,42 @@ class DeviceGitShowView(View):
                 "config": data,
             },
         )
+
+
+
+class BackupScheduleListView(View):
+
+    def get(self, request):
+        schedules = BackupSchedule.objects.all().order_by("name")
+
+        return render(
+            request,
+            "netbox_device_config/schedule_list.html",
+            {"schedules": schedules}
+        )
+
+class BackupScheduleCreateView(View):
+
+    def get(self, request):
+        from dcim.models import Device
+        devices = Device.objects.filter(
+            id__in=DeviceCredential.objects.values_list("device_id", flat=True)
+        ).order_by("name")
+
+        return render(
+            request,
+            "netbox_device_config/schedule_add.html",
+            {"devices": devices}
+        )
+
+    def post(self, request):
+
+        BackupSchedule.objects.create(
+            name=request.POST.get("name"),
+            device_id=request.POST.get("device") or None,
+            schedule_type=request.POST.get("schedule_type"),
+            time_of_day=request.POST.get("time_of_day") or None,
+            enabled=True
+        )
+
+        return redirect("plugins:netbox_device_config:schedule_list")
