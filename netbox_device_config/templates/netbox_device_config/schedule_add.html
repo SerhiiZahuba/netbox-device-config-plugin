@@ -1,0 +1,45 @@
+{% extends 'base/layout.html' %}
+{% block content %}
+
+<h2>Create backup task</h2>
+
+<form method="post">
+    {% csrf_token %}
+
+    <div class="mb-3">
+        <label>Name</label>
+        <input name="name" class="form-control">
+    </div>
+
+    <div class="mb-3">
+        <label>Device (optional)</label>
+        <select name="device" class="form-control">
+            <option value="">ALL devices</option>
+            {% for d in devices %}
+            <option value="{{ d.id }}">{{ d.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label>Schedule</label>
+        <select name="schedule_type" class="form-control">
+            <option value="minutely">Minutely</option>
+            <option value="hourly">Hourly</option>
+            <option value="12h">12 hours</option>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">30 days</option>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label>Time of day (for daily/weekly)</label>
+        <input type="time" name="time_of_day" class="form-control">
+    </div>
+
+    <button class="btn btn-success">Save</button>
+
+</form>
+
+{% endblock %}
