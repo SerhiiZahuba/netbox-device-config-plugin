@@ -1,14 +1,27 @@
 from django_rq import job
 from django.utils import timezone
-#from .models import DeviceCredential, DeviceConfigHistory, DeviceBackupTask, BackupCommandSetting
 from .models import DeviceCredential, DeviceBackupTask, BackupCommandSetting
 from .git_utils import save_config_to_git
+#from .scheduler_engine import run_scheduler
 
 import paramiko
 import time
 
 
-@job("default", timeout=1200)
+# =====================================================
+# SCHEDULER TICK (крутиться кожну хвилину)
+# =====================================================
+
+@job("default", timeout=300)
+def scheduler_tick():
+    run_scheduler()
+
+
+# =====================================================
+# MAIN BACKUP TASK
+# =====================================================
+
+@job("default", timeout=1800)   # 30 min max
 def run_backup_task(task_id):
 
     task = DeviceBackupTask.objects.get(id=task_id)
@@ -24,27 +37,35 @@ def run_backup_task(task_id):
     task.save(update_fields=["started_at", "status"])
 
     cred = task.credential
-    template = cred.template  # FK to BackupCommandSetting
+    template = cred.template
 
-    # --- ЛОГУЄМО ШАБЛОН ---
-    if template:
-        append_log(f"Using template: {template.vendor}")
-        commands = [cmd.strip() for cmd in template.commands.splitlines() if cmd.strip()]
-        append_log(f"Commands ({len(commands)}):")
-        for cmd in commands:
-            append_log(f"  - {cmd}")
-    else:
-        append_log("ERROR: No template assigned to credential")
+    # =====================================================
+    # TEMPLATE CHECK
+    # =====================================================
+    if not template:
+        append_log("ERROR: No template assigned")
         task.status = "error"
-        task.error_message = "Device credential has no assigned template"
+        task.error_message = "No template assigned"
         task.save(update_fields=["status", "error_message"])
         return
 
+    append_log(f"Using template: {template.vendor}")
+
+    commands = [c.strip() for c in template.commands.splitlines() if c.strip()]
+
+    append_log(f"Commands ({len(commands)}):")
+    for c in commands:
+        append_log(f"  - {c}")
+
+    # =====================================================
+    # SSH CONNECT
+    # =====================================================
     try:
         append_log(f"Connecting to {cred.host}:{cred.port} as {cred.username}")
 
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
         client.connect(
             hostname=cred.host,
             port=int(cred.port),
@@ -57,48 +78,55 @@ def run_backup_task(task_id):
             allow_agent=False
         )
 
-
-        append_log("SSH connection established, starting session")
+        append_log("SSH connected")
 
         transport = client.get_transport()
 
         output = ""
+
+        # =====================================================
+        # RUN COMMANDS
+        # =====================================================
         for cmd in commands:
+
             append_log(f"Executing: {cmd}")
 
             channel = transport.open_session()
-            channel.settimeout(20)
+            channel.settimeout(60)
             channel.exec_command(cmd)
 
             chunk = b""
             start = time.time()
 
             while True:
+
                 if channel.recv_ready():
                     chunk += channel.recv(65535)
 
                 if channel.exit_status_ready():
                     break
 
-                if time.time() - start > 60:
-                    append_log(f"ERROR: Command timeout after 60 seconds: {cmd}")
+                if time.time() - start > 120:
                     raise Exception(f"Timeout on command: {cmd}")
 
-                time.sleep(1)
+                time.sleep(0.5)
 
             decoded = chunk.decode(errors="ignore")
+
             append_log(f"Received {len(decoded)} bytes")
-            output += f"# COMMAND: {cmd}\n{decoded}\n\n"
+
+            output += f"\n\n# COMMAND: {cmd}\n{decoded}"
 
         client.close()
 
-        config_data = output
-
+        # =====================================================
+        # SAVE TO GIT
+        # =====================================================
         append_log("Saving config to git")
 
-        commit = save_config_to_git(task.device, config_data)
+        commit = save_config_to_git(task.device, output)
 
-        append_log(f"Committed to git: {commit}")
+        append_log(f"Git commit: {commit}")
 
         task.git_commit = commit
         task.finished_at = timezone.now()
@@ -109,6 +137,7 @@ def run_backup_task(task_id):
         append_log("Backup completed successfully")
 
     except Exception as e:
+
         append_log(f"ERROR: {str(e)}")
 
         task.finished_at = timezone.now()
@@ -116,4 +145,3 @@ def run_backup_task(task_id):
         task.status = "error"
         task.error_message = str(e)
         task.save(update_fields=["finished_at", "duration", "status", "error_message"])
-
