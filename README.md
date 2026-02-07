@@ -72,3 +72,21 @@ Python 3.10+
 Paramiko library (installed automatically)
 
 SSH access to target devices
+
+---
+
+## 🤖 Development & Code Quality
+
+This project uses automated code review and revision agents to maintain high code quality.
+
+### Code Review Agent
+
+Every Pull Request is automatically reviewed by our code review agent that checks for:
+- 🔍 **Code Style**: PEP 8 compliance and Django best practices
+- 🔐 **Security**: SQL injection, XSS, hardcoded secrets detection
+- ⚡ **Performance**: Database query optimization, N+1 queries
+- 🐛 **Logic**: Error handling, dead code, null pointer issues
+- ✅ **Tests**: Test coverage and quality
+- 📚 **Documentation**: Docstrings and documentation updates
+
+For more details, see [.github/agents/README.md](.github/agents/README.md)
