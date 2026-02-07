@@ -102,3 +102,30 @@ class GitSettings(models.Model):
 
     def __str__(self):
         return self.repo_url
+
+class BackupSchedule(models.Model):
+
+    SCHEDULE_CHOICES = [
+        ("minutely", "Minutely"),
+        ("hourly", "Hourly"),
+        ("12h", "Every 12 hours"),
+        ("daily", "Daily"),
+        ("weekly", "Weekly"),
+        ("monthly", "Every 30 days"),
+    ]
+
+    name = models.CharField(max_length=100)
+    device = models.ForeignKey(Device, on_delete=models.CASCADE, null=True, blank=True)
+    schedule_type = models.CharField(max_length=20, choices=SCHEDULE_CHOICES)
+    time_of_day = models.TimeField(null=True, blank=True)
+    day_of_week = models.IntegerField(null=True, blank=True)
+    enabled = models.BooleanField(default=True)
+    last_run = models.DateTimeField(null=True, blank=True)
+
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return f"{self.name} ({self.schedule_type})"
