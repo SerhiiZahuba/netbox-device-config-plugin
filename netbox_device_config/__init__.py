@@ -1,9 +1,11 @@
 from netbox.plugins import PluginConfig
 
+
+
 class DeviceConfigPluginConfig(PluginConfig):
     name = 'netbox_device_config'
     verbose_name = 'Device Config Backup'
-    description = 'Fetch and store MikroTik configs using Netmiko'
+    description = 'Fetch and store configs using Netmiko'
     version = '1.0.0'
     author = 'Serhii Zahuba'
     author_email = 'dev@cre.com'
@@ -14,6 +16,7 @@ class DeviceConfigPluginConfig(PluginConfig):
     def ready(self):
         super().ready()
         from . import template_content, navigation
+        from . import jobs
 
 
 config = DeviceConfigPluginConfig
