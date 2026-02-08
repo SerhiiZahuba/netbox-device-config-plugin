@@ -18,7 +18,7 @@ The plugin uses **Paramiko (SSH)** to connect to devices and retrieve configurat
 ## 🚀 Roadmap / Future Plans
 - 🔁 Automated scheduled backups (cron-based or NetBox jobs integration)
 - 🌐 Support for additional device vendors (Juniper, Fortinet, etc.)
-- 📤 Push configurations to **Git repositories** (GitLab, GitHub, Gitea)
+- 📤 Push configurations to **Git repositories** (GitLab, GitHub)
 - 🧩 Full multi-vendor command and connection handling
 
 ---
@@ -51,7 +51,7 @@ python3 manage.py migrate netbox_device_config
 
 Restart NetBox:
 
-sudo systemctl restart netbox
+sudo systemctl restart netbox netbox-rq
 
 🖥️ Usage
 
