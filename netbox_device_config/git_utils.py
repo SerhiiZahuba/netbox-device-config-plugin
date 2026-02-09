@@ -35,12 +35,24 @@ def save_config_to_git(device, config_text):
     filename = f"{device.name}.cfg"
     fullpath = os.path.join(repo, filename)
 
-
+    # save config
     with open(fullpath, "w") as f:
         f.write(config_text)
 
+    # add file
     run("git add .", cwd=repo)
 
+    # check if some change
+    diff = subprocess.run(
+        ["git", "diff", "--cached", "--quiet"],
+        cwd=repo
+    )
+
+    if diff.returncode == 0:
+        # nothing to commit
+        return None
+
+    # є зміни → commit
     run(
         f'git commit -m "backup {device.name} from netbox"',
         cwd=repo
@@ -51,3 +63,4 @@ def save_config_to_git(device, config_text):
     commit = run("git rev-parse HEAD", cwd=repo)
 
     return commit
+
