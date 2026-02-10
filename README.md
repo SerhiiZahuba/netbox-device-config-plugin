@@ -1,7 +1,7 @@
 # 🧩 NetBox Device Config Plugin
 
 A **NetBox plugin** that enables network device configuration backups directly from the NetBox interface.  
-The plugin uses **Paramiko (SSH)** to connect to devices and retrieve configurations — currently tested with **MikroTik** and **Cisco** devices.
+The plugin uses **Paramiko (SSH)**  and **Netmiko (SSH)** to connect to devices and retrieve configurations — currently tested with **MikroTik** and **Cisco** devices.
 
 ---
 
@@ -19,7 +19,7 @@ The plugin uses **Paramiko (SSH)** to connect to devices and retrieve configurat
 - 🔁 Automated scheduled backups (cron-based or NetBox jobs integration)
 - 🌐 Support for additional device vendors (Juniper, Fortinet, etc.)
 - 📤 Push configurations to **Git repositories** (GitLab, GitHub)
-- 🧩 Full multi-vendor command and connection handling
+- 🧩 Multi-vendor command and connection handling
 
 ---
 
@@ -28,7 +28,7 @@ The plugin uses **Paramiko (SSH)** to connect to devices and retrieve configurat
 ```bash
 cd /opt/netbox/netbox/
 source ../venv/bin/activate
-python3 -m pip install paramiko
+python3 -m pip install paramiko netmiko
 
 
 Add the plugin to your NetBox configuration file (configuration.py):
@@ -69,6 +69,6 @@ NetBox 4.x or newer
 
 Python 3.10+
 
-Paramiko library (installed automatically)
+Paramiko and Netmiko library
 
 SSH access to target devices
