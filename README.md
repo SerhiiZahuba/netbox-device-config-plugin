@@ -1,7 +1,7 @@
 # 🧩 NetBox Device Config Plugin
 
 A **NetBox plugin** that enables network device configuration backups directly from the NetBox interface.  
-The plugin uses **Paramiko (SSH)**  and **Netmiko (SSH)** to connect to devices and retrieve configurations — currently tested with **MikroTik** and **Cisco** devices.
+The plugin uses **Paramiko (SSH)**  and **Netmiko (SSH)** to connect to devices and retrieve configurations — currently tested with **MikroTik**, some **TpLink** and **Cisco** devices.
 
 ---
 
