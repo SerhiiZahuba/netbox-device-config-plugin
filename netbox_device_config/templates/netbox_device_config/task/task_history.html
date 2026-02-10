@@ -1,0 +1,114 @@
+{% extends 'base/layout.html' %}
+{% block content %}
+<h2>Backup Task History</h2>
+
+
+
+<form method="get" class="mb-3">
+    <label>Rows per page:</label>
+    <select name="per_page" onchange="this.form.submit()">
+        <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
+        <option value="25" {% if per_page == 25 %}selected{% endif %}>25</option>
+        <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+        <option value="100" {% if per_page == 100 %}selected{% endif %}>100</option>
+    </select>
+</form>
+
+
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th>Device</th>
+        <th>Status</th>
+        <th>Queued</th>
+        <th>Started</th>
+        <th>Finished</th>
+        <th>Duration</th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for t in tasks %}
+    <tr>
+        <td>{{ t.device }}</td>
+        <td>
+            {% if t.status == "success" %}
+            <span class="badge bg-success">Success</span>
+            {% elif t.status == "error" %}
+            <span class="badge bg-danger">Error</span>
+            {% elif t.status == "running" %}
+            <span class="badge bg-warning">Running</span>
+            {% else %}
+            <span class="badge bg-secondary text-white">Queued</span>
+
+            {% endif %}
+        </td>
+        <td>{{ t.queued_at }}</td>
+        <td>{{ t.started_at|default:"-" }}</td>
+        <td>{{ t.finished_at|default:"-" }}</td>
+        <td>{{ t.duration|default:"-" }}</td>
+        <td>
+            <a href="{% url 'plugins:netbox_device_config:task_detail' t.id %}" class="btn btn-sm btn-primary">View</a>
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+
+<nav>
+    <ul class="pagination">
+
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link"
+               href="?page={{ page_obj.previous_page_number }}&per_page={{ per_page }}">
+                «
+            </a>
+        </li>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+        {% if num == page_obj.number %}
+        <li class="page-item active">
+            <span class="page-link">{{ num }}</span>
+        </li>
+
+        {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+        <li class="page-item">
+            <a class="page-link"
+               href="?page={{ num }}&per_page={{ per_page }}">
+                {{ num }}
+            </a>
+        </li>
+
+        {% elif num == 1 or num == page_obj.paginator.num_pages %}
+        <li class="page-item">
+            <a class="page-link"
+               href="?page={{ num }}&per_page={{ per_page }}">
+                {{ num }}
+            </a>
+        </li>
+
+        {% elif num == page_obj.number|add:"-3" or num == page_obj.number|add:"3" %}
+        <li class="page-item disabled">
+            <span class="page-link">…</span>
+        </li>
+        {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link"
+               href="?page={{ page_obj.next_page_number }}&per_page={{ per_page }}">
+                »
+            </a>
+        </li>
+        {% endif %}
+
+    </ul>
+</nav>
+
+
+
+{% endblock %}
