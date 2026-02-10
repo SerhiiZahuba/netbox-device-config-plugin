@@ -22,11 +22,11 @@ from .models import DeviceBackupTask
 from .tasks import run_backup_task
 
 from .models import BackupSchedule
-
-
-
-
 from django.core.paginator import Paginator
+
+
+from django.db.models import Q
+
 
 #from django.utils.timezone import now, timedelta
 #from django.shortcuts import render
@@ -449,9 +449,23 @@ class DeviceCredentialEditView(View):
 
 
 
+
+
+
 class DeviceCredentialListView(View):
 
     def get(self, request):
+
+        search = request.GET.get("q", "")
+        per_page = request.GET.get("per_page", 10)
+
+        try:
+            per_page = int(per_page)
+        except:
+            per_page = 10
+
+        if per_page not in [10, 25, 50, 100]:
+            per_page = 10
 
         creds = (
             DeviceCredential.objects
@@ -459,10 +473,27 @@ class DeviceCredentialListView(View):
             .order_by("device__name")
         )
 
+        # 🔎 SEARCH
+        if search:
+            creds = creds.filter(
+                Q(device__id__icontains=search) |
+                Q(device__name__icontains=search) |
+                Q(host__icontains=search)
+            )
+
+        paginator = Paginator(creds, per_page)
+        page_number = request.GET.get("page")
+        page_obj = paginator.get_page(page_number)
+
         return render(
             request,
-            'netbox_device_config/device_list.html',
-            {"table": creds}
+            "netbox_device_config/device/device_list.html",
+            {
+                "table": page_obj,
+                "page_obj": page_obj,
+                "search": search,
+                "per_page": per_page,
+            }
         )
 
 
