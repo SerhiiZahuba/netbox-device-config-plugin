@@ -1,0 +1,185 @@
+{% extends 'base/layout.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Device List</h2>
+
+</div>
+
+
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+
+    <form method="get" class="d-flex gap-2">
+
+        <input type="text"
+               name="q"
+               value="{{ search }}"
+               placeholder="Search device id, name, IP..."
+               class="form-control form-control-sm"
+               style="width: 280px;">
+
+        <select name="per_page"
+                class="form-select form-select-sm"
+                onchange="this.form.submit()">
+            <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
+            <option value="25" {% if per_page == 25 %}selected{% endif %}>25</option>
+            <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+            <option value="100" {% if per_page == 100 %}selected{% endif %}>100</option>
+        </select>
+
+        <button class="btn btn-sm btn-outline-primary">Search</button>
+    </form>
+
+    <a href="{% url 'plugins:netbox_device_config:devicecredential_add' %}"
+       class="btn btn-success">
+        Add Device
+    </a>
+
+</div>
+
+
+<table class="table table-striped align-middle">
+    <thead>
+    <tr>
+        <th>Device</th>
+        <th>Host IP</th>
+        <th>Port</th>
+        <th>Username</th>
+        <th>Template</th>
+        <th>Backups</th>
+        <th class="text-end">Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for c in table %}
+    <tr>
+        <td>{{ c.device }}</td>
+        <td>{{ c.host }}</td>
+        <td>{{ c.port }}</td>
+        <td>{{ c.username }}</td>
+        <td>
+            {% if c.template %}
+            <span class="badge bg-info text-dark">{{ c.template.vendor }}</span>
+            {% else %}
+            <span class="text-muted">—</span>
+            {% endif %}
+        </td>
+        <td>
+            <span class="text-muted">git</span>
+
+        </td>
+
+
+        <td class="text-end">
+
+            <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                        type="button"
+                        data-bs-toggle="dropdown">
+                    ⋮
+                </button>
+
+                <ul class="dropdown-menu dropdown-menu-end">
+
+                    <li>
+                        <a class="dropdown-item"
+                           href="{% url 'plugins:netbox_device_config:devicecredential_edit' c.id %}">
+                            Edit
+                        </a>
+                    </li>
+
+                    <li>
+                        <a class="dropdown-item"
+                           href="{% url 'plugins:netbox_device_config:devicecredential_test' c.id %}">
+                            Test connection
+                        </a>
+                    </li>
+
+                    <li>
+                        <a class="dropdown-item"
+                           href="{% url 'plugins:netbox_device_config:devicecredential_backup' c.id %}">
+                            Run backup
+                        </a>
+                    </li>
+
+                </ul>
+            </div>
+
+        </td>
+
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="6" class="text-center text-muted">No credentials yet</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+
+
+<div class="d-flex justify-content-between align-items-center mt-3">
+
+    <div class="text-muted">
+        Showing {{ page_obj.start_index }}–{{ page_obj.end_index }}
+        of {{ page_obj.paginator.count }}
+    </div>
+
+    <nav>
+        <ul class="pagination mb-0">
+
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link"
+                   href="?page={{ page_obj.previous_page_number }}&per_page={{ per_page }}&q={{ search }}">
+                    «
+                </a>
+            </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+            {% if num == page_obj.number %}
+            <li class="page-item active">
+                <span class="page-link">{{ num }}</span>
+            </li>
+
+            {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+            <li class="page-item">
+                <a class="page-link"
+                   href="?page={{ num }}&per_page={{ per_page }}&q={{ search }}">
+                    {{ num }}
+                </a>
+            </li>
+
+            {% elif num == 1 or num == page_obj.paginator.num_pages %}
+            <li class="page-item">
+                <a class="page-link"
+                   href="?page={{ num }}&per_page={{ per_page }}&q={{ search }}">
+                    {{ num }}
+                </a>
+            </li>
+
+            {% elif num == page_obj.number|add:"-3" or num == page_obj.number|add:"3" %}
+            <li class="page-item disabled">
+                <span class="page-link">…</span>
+            </li>
+            {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link"
+                   href="?page={{ page_obj.next_page_number }}&per_page={{ per_page }}&q={{ search }}">
+                    »
+                </a>
+            </li>
+            {% endif %}
+
+        </ul>
+    </nav>
+
+</div>
+
+
+
+{% endblock %}
