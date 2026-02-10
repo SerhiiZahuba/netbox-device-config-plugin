@@ -25,6 +25,9 @@ from .models import BackupSchedule
 
 
 
+
+from django.core.paginator import Paginator
+
 #from django.utils.timezone import now, timedelta
 #from django.shortcuts import render
 #from dcim.models import Device
@@ -302,10 +305,30 @@ def compare_config(request, config_id):
 
 
 class BackupTaskListView(View):
+
     def get(self, request):
-        tasks = DeviceBackupTask.objects.order_by("-queued_at")[:200]
-        return render(request, "netbox_device_config/task_history.html", {
-            "tasks": tasks
+
+        per_page = request.GET.get("per_page", 10)
+
+        try:
+            per_page = int(per_page)
+        except ValueError:
+            per_page = 10
+
+        if per_page not in [10, 25, 50, 100]:
+            per_page = 10
+
+        tasks_qs = DeviceBackupTask.objects.order_by("-queued_at")
+
+        paginator = Paginator(tasks_qs, per_page)
+
+        page_number = request.GET.get("page")
+        page_obj = paginator.get_page(page_number)
+
+        return render(request, "netbox_device_config/task/task_history.html", {
+            "tasks": page_obj,
+            "page_obj": page_obj,
+            "per_page": per_page,
         })
 
 class BackupTaskDetailView(View):
