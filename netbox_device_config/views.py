@@ -234,7 +234,7 @@ class BackupStatisticsView(View):
 
         last_tasks = tasks_qs[:50]
 
-        return render(request, "netbox_device_config/statistics.html", {
+        return render(request, "netbox_device_config/statistics/statistics.html", {
             "total_devices": total_devices,
             "total_backups": total_backups,
             "today_backups": today_backups,
