@@ -410,7 +410,7 @@ class DeviceCredentialEditView(View):
         devices = Device.objects.all().order_by("name")
         templates = BackupCommandSetting.objects.all().order_by("vendor")
 
-        return render(request, "netbox_device_config/credential_edit.html", {
+        return render(request, "netbox_device_config/device/device_edit.html", {
             "cred": cred,
             "devices": devices,
             "templates": templates,
