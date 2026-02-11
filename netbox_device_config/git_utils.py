@@ -3,9 +3,17 @@ import subprocess
 from .models import GitSettings
 
 
+# -------------------------------------------------
+# helper
+# -------------------------------------------------
+
 def run(cmd, cwd=None):
     return subprocess.check_output(cmd, shell=True, cwd=cwd).decode().strip()
 
+
+# -------------------------------------------------
+# repo
+# -------------------------------------------------
 
 def ensure_repo():
 
@@ -15,11 +23,11 @@ def ensure_repo():
     if not os.path.exists(path):
         os.makedirs(path, exist_ok=True)
 
-    # якщо нема .git → clone
+    # clone якщо нема
     if not os.path.exists(os.path.join(path, ".git")):
         run(f"git clone {settings.repo_url} {path}")
 
-    # checkout branch
+    # branch
     run(f"git checkout {settings.branch}", cwd=path)
 
     # pull
@@ -27,32 +35,34 @@ def ensure_repo():
 
     return path
 
+
+# -------------------------------------------------
+# SAVE CONFIG
+# -------------------------------------------------
+
 def save_config_to_git(device, config_text):
 
-    settings = GitSettings.objects.first()
     repo = ensure_repo()
-
     filename = f"{device.name}.cfg"
     fullpath = os.path.join(repo, filename)
 
-    # save config
+    # save file
     with open(fullpath, "w") as f:
         f.write(config_text)
 
-    # add file
-    run("git add .", cwd=repo)
+    subprocess.run("git add .", shell=True, cwd=repo)
 
-    # check if some change
+    # перевірка змін
     diff = subprocess.run(
         ["git", "diff", "--cached", "--quiet"],
         cwd=repo
     )
 
     if diff.returncode == 0:
-        # nothing to commit
+        # змін нема
         return None
 
-    # є зміни → commit
+    # commit
     run(
         f'git commit -m "backup {device.name} from netbox"',
         cwd=repo
@@ -60,22 +70,44 @@ def save_config_to_git(device, config_text):
 
     run("git push", cwd=repo)
 
+    # hash
     commit = run("git rev-parse HEAD", cwd=repo)
 
     return commit
+
+
+# -------------------------------------------------
+# GET LATEST CONFIG
+# -------------------------------------------------
 
 def get_latest_config(device):
     repo = ensure_repo()
     filename = f"{device.name}.cfg"
 
     try:
-        output = run(
-            f"git show HEAD:{filename}",
-            cwd=repo
-        )
+        output = run(f"git show HEAD:{filename}", cwd=repo)
         return output
     except Exception:
         return "No config found in repository"
+
+
+# -------------------------------------------------
+# GET CONFIG BY COMMIT
+# -------------------------------------------------
+
+def get_config_by_commit(device, commit):
+    repo = ensure_repo()
+    filename = f"{device.name}.cfg"
+
+    try:
+        return run(f"git show {commit}:{filename}", cwd=repo)
+    except Exception:
+        return "Config not found in this commit"
+
+
+# -------------------------------------------------
+# HISTORY
+# -------------------------------------------------
 
 def get_config_history(device):
     repo = ensure_repo()
@@ -97,3 +129,28 @@ def get_config_history(device):
         })
 
     return history
+
+
+# -------------------------------------------------
+# SIZE MAP
+# -------------------------------------------------
+
+def get_config_size_map(device):
+    repo = ensure_repo()
+    filename = f"{device.name}.cfg"
+
+    size_map = {}
+
+    commits = run(
+        f"git log --pretty=format:%H -- {filename}",
+        cwd=repo
+    ).splitlines()
+
+    for commit in commits:
+        try:
+            content = run(f"git show {commit}:{filename}", cwd=repo)
+            size_map[commit] = len(content.encode())
+        except Exception:
+            size_map[commit] = 0
+
+    return size_map
