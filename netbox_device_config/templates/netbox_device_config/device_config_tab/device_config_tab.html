@@ -1,0 +1,154 @@
+{% extends 'dcim/device/base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-3">
+        <li class="nav-item">
+            <a class="nav-link active" data-bs-toggle="tab" href="#details">Details</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="tab" href="#history">Config History</a>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+
+        <!-- DETAILS TAB -->
+        <div class="tab-pane fade show active" id="details">
+
+            <div class="row">
+
+                <!-- LEFT -->
+                <div class="col-md-3">
+
+                    <div class="card">
+                        <div class="card-header fw-bold">
+                            Device Details
+                        </div>
+
+                        <div class="card-body">
+
+                            <p><strong>ID:</strong> {{ object.id }}</p>
+                            <p><strong>Name:</strong> {{ object.name }}</p>
+
+                            {% if latest %}
+                            <p><strong>Template:</strong>
+                                {% if latest.credential and latest.credential.template %}
+                                <span class="badge bg-info text-dark">
+                                 {{ latest.credential.template.vendor }}
+                                </span>
+                                {% else %}
+                                <span class="text-muted">—</span>
+                                {% endif %}
+                            </p>
+                            <p><strong>File size:</strong> {{ latest.log|length }} bytes</p>
+                            <p><strong>Duration:</strong> {{ latest.duration }} sec</p>
+                            <p><strong>Created:</strong> {{ latest.finished_at }}</p>
+                            {% else %}
+                            <p class="text-muted">No backups yet</p>
+                            {% endif %}
+
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- RIGHT -->
+                <div class="col-md-9">
+
+                    <div class="card">
+                        <div class="card-header fw-bold">
+                            Latest Config
+                        </div>
+
+                        <div class="card-body">
+
+                            {% if latest %}
+                            <pre>{{ latest_config }}</pre>
+                            {% else %}
+                            <div class="text-muted">No config available</div>
+                            {% endif %}
+
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- HISTORY TAB -->
+        <div class="tab-pane fade" id="history">
+
+            <div class="row">
+
+                <!-- LEFT -->
+                <div class="col-md-3">
+
+                    <div class="card">
+                        <div class="card-header fw-bold">
+                            Versions
+                        </div>
+
+                        <div class="list-group list-group-flush">
+
+                            {% for conf in history %}
+                            <a href="?config={{ conf.id }}"
+                               class="list-group-item list-group-item-action
+                                   {% if conf.id == latest.id %}active{% endif %}">
+
+                                <div class="d-flex justify-content-between">
+                                    <span>v{{ forloop.counter }}</span>
+                                    <small>{{ conf.finished_at|date:"Y-m-d H:i" }}</small>
+                                </div>
+
+                                <small class="text-muted">
+                                    {{ conf.log|length }} bytes
+                                </small>
+                            </a>
+                            {% empty %}
+                            <div class="list-group-item text-muted">
+                                No configs
+                            </div>
+                            {% endfor %}
+
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- RIGHT -->
+                <div class="col-md-9">
+
+                    <div class="card">
+                        <div class="card-header fw-bold">
+                            Config Preview
+                        </div>
+
+                        <div class="card-body">
+
+                            {% if latest %}
+                            <pre style="max-height:700px;overflow:auto;">
+{{ latest.log }}
+                                </pre>
+                            {% endif %}
+
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
