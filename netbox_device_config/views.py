@@ -334,7 +334,7 @@ class BackupTaskListView(View):
 class BackupTaskDetailView(View):
     def get(self, request, pk):
         task = get_object_or_404(DeviceBackupTask, pk=pk)
-        return render(request, "netbox_device_config/task_detail.html", {
+        return render(request, "netbox_device_config/task/task_detail.html", {
             "task": task
         })
 
