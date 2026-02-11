@@ -544,7 +544,7 @@ class GitSettingsView(View):
 
     def get(self, request):
         settings = GitSettings.objects.first()
-        return render(request, "netbox_device_config/git_settings.html", {
+        return render(request, "netbox_device_config/git/git_settings.html", {
             "settings": settings
         })
 
@@ -584,7 +584,7 @@ class DeviceGitDiffView(View):
         except Exception:
             diff = "No previous diff available"
 
-        return render(request, "netbox_device_config/git_diff.html", {
+        return render(request, "netbox_device_config/git/git_diff.html", {
             "device": device,
             "diff": diff
         })
@@ -607,7 +607,7 @@ class DeviceGitShowView(View):
 
         return render(
             request,
-            "netbox_device_config/git_config_view.html",
+            "netbox_device_config/git/git_config_view.html",
             {
                 "device": device,
                 "config": data,
