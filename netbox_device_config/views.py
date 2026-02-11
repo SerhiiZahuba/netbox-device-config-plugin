@@ -10,7 +10,6 @@ from .models import DeviceCredential, GitSettings
 import difflib
 from datetime import datetime
 from django.http import HttpResponse
-#from .models import DeviceConfigHistory
 from django.db.models import Sum, Count, Max
 from django.utils.timezone import now, localdate, timedelta
 from django.http import HttpResponse
@@ -28,11 +27,6 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 
 
-#from django.utils.timezone import now, timedelta
-#from django.shortcuts import render
-#from dcim.models import Device
-#from .models import DeviceBackupTask
-#from django.db.models import Count
 
 
 
