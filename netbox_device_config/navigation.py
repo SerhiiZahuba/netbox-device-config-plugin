@@ -10,6 +10,7 @@ menu = PluginMenu(
             PluginMenuItem(link='plugins:netbox_device_config:config_search', link_text='Search Configs',),
             PluginMenuItem(link='plugins:netbox_device_config:git_settings', link_text='Settings'       ),
             PluginMenuItem(link='plugins:netbox_device_config:schedule_list', link_text='Scheduler',),
+            PluginMenuItem(link='plugins:netbox_device_config:task_history', link_text='Tasks',),
         )),
     ),
 )
