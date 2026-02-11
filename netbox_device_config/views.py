@@ -425,14 +425,18 @@ class DeviceCredentialEditView(View):
         cred.username = request.POST.get("username")
         cred.password = request.POST.get("password")
 
-        
         template_id = request.POST.get("template")
         cred.template_id = template_id or None
+
+        # 🔽 SNMP
+        cred.snmp_community = request.POST.get("snmp_community") or "public"
+        cred.snmp_enable = bool(request.POST.get("snmp_enable"))
 
         cred.save()
 
         messages.success(request, f"Updated credentials for {cred.device.name}")
         return redirect("plugins:netbox_device_config:devicecredential_list")
+
 
 
 
@@ -461,7 +465,7 @@ class DeviceCredentialListView(View):
             .order_by("device__name")
         )
 
-        # 🔎 SEARCH
+        # SEARCH
         if search:
             creds = creds.filter(
                 Q(device__id__icontains=search) |
