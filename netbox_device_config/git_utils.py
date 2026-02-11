@@ -64,3 +64,36 @@ def save_config_to_git(device, config_text):
 
     return commit
 
+def get_latest_config(device):
+    repo = ensure_repo()
+    filename = f"{device.name}.cfg"
+
+    try:
+        output = run(
+            f"git show HEAD:{filename}",
+            cwd=repo
+        )
+        return output
+    except Exception:
+        return "No config found in repository"
+
+def get_config_history(device):
+    repo = ensure_repo()
+    filename = f"{device.name}.cfg"
+
+    output = run(
+        f'git log --pretty=format:"%H|%ad|%s" --date=iso -- {filename}',
+        cwd=repo
+    )
+
+    history = []
+
+    for line in output.splitlines():
+        commit, date, msg = line.split("|", 2)
+        history.append({
+            "commit": commit,
+            "date": date,
+            "msg": msg
+        })
+
+    return history
