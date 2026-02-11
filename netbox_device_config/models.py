@@ -66,7 +66,6 @@ class DeviceCredential(models.Model):
     username = models.CharField(max_length=100)
     password = models.CharField(max_length=255)
 
-
     template = models.ForeignKey(
         BackupCommandSetting,
         on_delete=models.SET_NULL,
@@ -76,8 +75,21 @@ class DeviceCredential(models.Model):
         help_text="Backup command template to use for this device"
     )
 
+
+    snmp_community = models.CharField(
+        max_length=100,
+        default="public",
+        help_text="SNMP community string"
+    )
+
+    snmp_enable = models.BooleanField(
+        default=False,
+        help_text="Enable SNMP usage for this device"
+    )
+
     def __str__(self):
         return f"{self.device.name} ({self.host})"
+
 
 
 
@@ -129,3 +141,4 @@ class BackupSchedule(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.schedule_type})"
+
