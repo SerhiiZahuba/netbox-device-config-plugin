@@ -20,8 +20,7 @@ from .tasks import run_backup_task
 from .models import BackupSchedule
 from django.core.paginator import Paginator
 from django.db.models import Q
-from .git_utils import save_config_to_git, get_latest_config
-
+from .git_utils import save_config_to_git, get_latest_config, get_config_size_map
 
 
 
@@ -176,19 +175,47 @@ class DeviceConfigTabView(generic.ObjectView):
     def get(self, request, *args, **kwargs):
         device = get_object_or_404(Device, pk=kwargs.get("pk"))
 
-        # all backup
+        # -------------------------------------------------
+        # HISTORY
+        # -------------------------------------------------
         history = (
             DeviceBackupTask.objects
             .filter(device=device, status="success")
             .order_by("-finished_at")
         )
 
-        # last
         latest = history.first()
 
-        # config from git
-        latest_config = get_latest_config(device) if latest else None
+        # -------------------------------------------------
+        # SIZE MAP (ВАЖЛИВО — ДО циклу)
+        # -------------------------------------------------
+        conf_size_map = get_config_size_map(device)
 
+        for conf in history:
+            conf.size = conf_size_map.get(conf.git_commit, 0)
+
+        # -------------------------------------------------
+        # SELECTED CONFIG
+        # -------------------------------------------------
+        selected_id = request.GET.get("config")
+
+        if selected_id:
+            selected = history.filter(id=selected_id).first()
+        else:
+            selected = latest
+
+        # -------------------------------------------------
+        # CONFIG TEXT
+        # -------------------------------------------------
+        if selected and selected.git_commit:
+            selected_config = get_config_by_commit(device, selected.git_commit)
+        else:
+            selected_config = None
+
+        # latest preview
+        latest_config = selected_config if not selected_id else get_latest_config(device)
+
+        # -------------------------------------------------
         return render(
             request,
             "netbox_device_config/device_config_tab/device_config_tab.html",
@@ -196,10 +223,13 @@ class DeviceConfigTabView(generic.ObjectView):
                 "object": device,
                 "tab": self.tab,
                 "latest": latest,
-                "latest_config": latest_config,
                 "history": history,
+                "selected": selected,
+                "selected_config": selected_config,
+                "latest_config": latest_config,
             },
         )
+
 
 
 
