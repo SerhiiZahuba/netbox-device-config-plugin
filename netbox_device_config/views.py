@@ -1,31 +1,25 @@
+import time
+import subprocess
+import difflib
+import paramiko
+
 from django.shortcuts import get_object_or_404, render, redirect
 from django.views import View
-from .models import DeviceCredential, BackupCommandSetting
+from .models import DeviceCredential, BackupCommandSetting, GitSettings
 from dcim.models import Device, Platform
-import paramiko
 from django.contrib import messages
 from django.utils import timezone
-#from .models import DeviceCredential, DeviceConfigHistory, DeviceConfigHistory, GitSettings
-from .models import DeviceCredential, GitSettings
-import difflib
 from datetime import datetime
 from django.http import HttpResponse
 from django.db.models import Sum, Count, Max
 from django.utils.timezone import now, localdate, timedelta
-from django.http import HttpResponse
 from netbox.views import generic
 from utilities.views import ViewTab, register_model_view
-import time
-import subprocess
 from .models import DeviceBackupTask
 from .tasks import run_backup_task
-
 from .models import BackupSchedule
 from django.core.paginator import Paginator
-
-
 from django.db.models import Q
-
 
 
 
