@@ -373,12 +373,12 @@ class DeviceCredentialTestView(View):
 
 class DeviceCredentialCreateView(View):
     """
-    Create new device credential
+    Create new device
     """
     def get(self, request):
         devices = Device.objects.all().order_by("name")
         templates = BackupCommandSetting.objects.all().order_by("vendor")
-        return render(request, "netbox_device_config/credential_add.html", {
+        return render(request, "netbox_device_config/device/device_add.html", {
             "devices": devices,
             "templates": templates,
         })
