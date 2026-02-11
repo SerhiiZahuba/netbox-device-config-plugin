@@ -20,6 +20,9 @@ from .tasks import run_backup_task
 from .models import BackupSchedule
 from django.core.paginator import Paginator
 from django.db.models import Q
+from .git_utils import save_config_to_git, get_latest_config
+
+
 
 
 
@@ -152,6 +155,13 @@ class BackupTemplatesDeleteView(View):
 
         
 
+from django.shortcuts import render, get_object_or_404
+from dcim.models import Device
+
+from .models import DeviceBackupTask
+from .git_utils import get_latest_config
+
+
 @register_model_view(Device, name="config", path="config")
 class DeviceConfigTabView(generic.ObjectView):
 
@@ -166,12 +176,28 @@ class DeviceConfigTabView(generic.ObjectView):
     def get(self, request, *args, **kwargs):
         device = get_object_or_404(Device, pk=kwargs.get("pk"))
 
+        # all backup
+        history = (
+            DeviceBackupTask.objects
+            .filter(device=device, status="success")
+            .order_by("-finished_at")
+        )
+
+        # last
+        latest = history.first()
+
+        # config from git
+        latest_config = get_latest_config(device) if latest else None
+
         return render(
             request,
-            "netbox_device_config/device_config_tab.html",
+            "netbox_device_config/device_config_tab/device_config_tab.html",
             {
                 "object": device,
                 "tab": self.tab,
+                "latest": latest,
+                "latest_config": latest_config,
+                "history": history,
             },
         )
 
