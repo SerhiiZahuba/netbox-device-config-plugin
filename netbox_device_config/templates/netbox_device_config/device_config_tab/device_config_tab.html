@@ -98,24 +98,38 @@
                         <div class="list-group list-group-flush">
 
                             {% for conf in history %}
-                            <a href="?config={{ conf.id }}"
-                               class="list-group-item list-group-item-action
-                                   {% if conf.id == latest.id %}active{% endif %}">
+
+                            <pre>{{ selected_config }}</pre>
 
                                 <div class="d-flex justify-content-between">
-                                    <span>v{{ forloop.counter }}</span>
-                                    <small>{{ conf.finished_at|date:"Y-m-d H:i" }}</small>
+                                    <strong>{{ conf.finished_at|date:"Y-m-d H:i" }}</strong>
+                                    <small class="text-muted">
+                                        {{ conf.duration|default:"—" }} sec
+                                    </small>
                                 </div>
 
-                                <small class="text-muted">
-                                    {{ conf.log|length }} bytes
-                                </small>
+                                <div class="d-flex justify-content-between mt-1">
+                                    <small class="text-muted">
+                                        commit:
+                                        {% if conf.git_commit %}
+                                        <code>{{ conf.git_commit|slice:":8" }}</code>
+                                        {% else %}
+                                        —
+                                        {% endif %}
+                                    </small>
+
+                                    <small class="text-muted">
+                                        {{ conf.size }} bytes
+                                    </small>
+                                </div>
+
                             </a>
                             {% empty %}
                             <div class="list-group-item text-muted">
                                 No configs
                             </div>
                             {% endfor %}
+
 
                         </div>
                     </div>
@@ -134,7 +148,8 @@
 
                             {% if latest %}
                             <pre style="max-height:700px;overflow:auto;">
-{{ latest.log }}
+{{ latest_config }}
+
                                 </pre>
                             {% endif %}
 
