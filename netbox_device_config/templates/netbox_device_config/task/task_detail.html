@@ -2,7 +2,7 @@
 {% block content %}
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1>Backup Task #{{ task.id }}</h1>
+    <h1>Backup Task #{{ task.id }} </h1>
 
     <a href="{% url 'plugins:netbox_device_config:task_history' %}" class="btn btn-sm btn-secondary">
         ← Back to Task History
@@ -19,7 +19,7 @@
             <tr>
                 <th style="width: 20%">Device</th>
                 <td>
-                    <a href="{{ task.device.get_absolute_url }}">{{ task.device }}</a>
+                    <a>{{ target  }}</a>
                 </td>
             </tr>
 
@@ -28,13 +28,20 @@
                 <td>
                     {% if task.status == "success" %}
                     <span class="badge bg-success">Success</span>
+
+                    {% elif task.status == "no_changes" %}
+                    <span class="badge bg-info text-dark">No changes</span>
+
                     {% elif task.status == "error" %}
                     <span class="badge bg-danger">Error</span>
+
                     {% elif task.status == "running" %}
                     <span class="badge bg-warning text-dark">Running</span>
+
                     {% else %}
-                    <span class="badge bg-secondary">Queued</span>
+                    <span class="badge bg-secondary">{{ task.status }}</span>
                     {% endif %}
+
                 </td>
             </tr>
 
