@@ -1,6 +1,6 @@
 from django.utils import timezone
 from datetime import timedelta
-from .models import BackupSchedule, DeviceCredential
+from .models import BackupSchedule, DeviceCredential, DeviceBackupTask
 from .tasks import run_backup_task
 
 
@@ -46,13 +46,31 @@ def run_scheduler():
         if not should_run(s):
             continue
 
+        # -------------------------------------------------
+        # ВИБІР CREDENTIALS
+        # -------------------------------------------------
         if s.device:
             creds = DeviceCredential.objects.filter(device=s.device)
         else:
             creds = DeviceCredential.objects.all()
 
-        for c in creds:
-            run_backup_task.delay(c.id)
+        # -------------------------------------------------
+        # CREATE TASK FOR EACH
+        # -------------------------------------------------
+        for cred in creds:
 
+            task = DeviceBackupTask.objects.create(
+                device=cred.device,
+                virtual_machine=cred.virtual_machine,
+                credential=cred,
+                status="queued",
+                queued_at=timezone.now(),
+            )
+
+            run_backup_task.delay(task.id)
+
+        # -------------------------------------------------
+        # LAST RUN
+        # -------------------------------------------------
         s.last_run = timezone.now()
         s.save()
