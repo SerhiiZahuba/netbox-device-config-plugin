@@ -359,7 +359,13 @@ class BackupTaskListView(View):
         if per_page not in [10, 25, 50, 100]:
             per_page = 10
 
-        tasks_qs = DeviceBackupTask.objects.order_by("-queued_at")
+        tasks_qs = (
+            DeviceBackupTask.objects
+            .annotate(
+                sort_time=Coalesce("finished_at", "started_at", "queued_at")
+            )
+            .order_by("-sort_time", "-id")
+        )
 
         paginator = Paginator(tasks_qs, per_page)
 
