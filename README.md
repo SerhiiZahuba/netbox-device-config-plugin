@@ -36,11 +36,6 @@ Add the plugin to your NetBox configuration file (configuration.py):
 PLUGINS = [
     "netbox_device_config",
 ]
-
-PLUGINS_CONFIG = {
-    "netbox_device_config": {
-        "enable_backup": True,
-    }
 }
 ```
 
