@@ -4,42 +4,46 @@ from dcim.models import Platform
 from virtualization.models import VirtualMachine
 
 
+
+
 class DeviceBackupTask(models.Model):
-    STATUS_CHOICES = [
-        ("queued", "Queued"),
-        ("running", "Running"),
-        ("success", "Success"),
-        ("error", "Error"),
-    ]
 
     device = models.ForeignKey(
         Device,
         on_delete=models.CASCADE,
-        related_name="backup_tasks"
+        null=True,
+        blank=True,
+    )
+
+    virtual_machine = models.ForeignKey(
+        VirtualMachine,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
     )
 
     credential = models.ForeignKey(
         "DeviceCredential",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True
+        on_delete=models.CASCADE
     )
 
-    queued_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, default="queued")
+    queued_at = models.DateTimeField(null=True, blank=True)
     started_at = models.DateTimeField(null=True, blank=True)
     finished_at = models.DateTimeField(null=True, blank=True)
 
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="queued")
     duration = models.FloatField(null=True, blank=True)
+    log = models.TextField(blank=True)
+    error_message = models.TextField(blank=True)
+    git_commit = models.CharField(max_length=64, null=True, blank=True)
 
-    error_message = models.TextField(blank=True, null=True)
-    log = models.TextField(blank=True, null=True)
-
-    git_commit = models.CharField(max_length=64, blank=True, null=True)
 
     def __str__(self):
         return f"Backup {self.device} ({self.status})"
 
+    @property
+    def target(self):
+        return self.device or self.virtual_machine
 
 class BackupCommandSetting(models.Model):
     vendor = models.CharField(
