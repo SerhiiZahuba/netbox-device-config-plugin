@@ -172,50 +172,43 @@ class DeviceConfigTabView(generic.ObjectView):
         permission="dcim.view_device",
     )
 
+
+
     def get(self, request, *args, **kwargs):
         device = get_object_or_404(Device, pk=kwargs.get("pk"))
 
-        # -------------------------------------------------
-        # HISTORY
-        # -------------------------------------------------
-        history = (
+        history_qs = (
             DeviceBackupTask.objects
             .filter(device=device, status="success")
             .order_by("-finished_at")
         )
 
-        latest = history.first()
+        paginator = Paginator(history_qs, 10)
 
-        # -------------------------------------------------
-        # SIZE MAP (ВАЖЛИВО — ДО циклу)
-        # -------------------------------------------------
+        page_number = request.GET.get("page")
+        history_page = paginator.get_page(page_number)
+
+        latest = history_qs.first()
+
         conf_size_map = get_config_size_map(device)
 
-        for conf in history:
+        for conf in history_page:
             conf.size = conf_size_map.get(conf.git_commit, 0)
 
-        # -------------------------------------------------
-        # SELECTED CONFIG
-        # -------------------------------------------------
-        selected_id = request.GET.get("config")
+        selected_commit = request.GET.get("commit")
 
-        if selected_id:
-            selected = history.filter(id=selected_id).first()
+        if selected_commit:
+            selected = history_qs.filter(git_commit=selected_commit).first()
         else:
             selected = latest
 
-        # -------------------------------------------------
-        # CONFIG TEXT
-        # -------------------------------------------------
         if selected and selected.git_commit:
             selected_config = get_config_by_commit(device, selected.git_commit)
         else:
             selected_config = None
 
-        # latest preview
-        latest_config = selected_config if not selected_id else get_latest_config(device)
+        latest_config = get_latest_config(device)
 
-        # -------------------------------------------------
         return render(
             request,
             "netbox_device_config/device_config_tab/device_config_tab.html",
@@ -223,12 +216,13 @@ class DeviceConfigTabView(generic.ObjectView):
                 "object": device,
                 "tab": self.tab,
                 "latest": latest,
-                "history": history,
+                "history": history_page,
                 "selected": selected,
                 "selected_config": selected_config,
                 "latest_config": latest_config,
             },
         )
+
 
 
 
