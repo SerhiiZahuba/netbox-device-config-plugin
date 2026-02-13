@@ -11,7 +11,7 @@ from django.contrib import messages
 from django.utils import timezone
 from datetime import datetime
 from django.http import HttpResponse
-from django.db.models import Sum, Count, Max
+from django.db.models import Sum, Count, Max, Q, F, Value
 from django.utils.timezone import now, localdate, timedelta
 from netbox.views import generic
 from utilities.views import ViewTab, register_model_view
@@ -22,8 +22,15 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from .git_utils import save_config_to_git, get_latest_config, get_config_size_map, get_config_by_commit
 from virtualization.models import VirtualMachine
+from django.db.models.functions import Coalesce
 
 
+
+#from django.shortcuts import render, get_object_or_404
+#from dcim.models import Device
+
+#from .models import DeviceBackupTask
+#from .git_utils import get_latest_config
 
 
 
@@ -154,11 +161,7 @@ class BackupTemplatesDeleteView(View):
 
         
 
-from django.shortcuts import render, get_object_or_404
-from dcim.models import Device
 
-from .models import DeviceBackupTask
-from .git_utils import get_latest_config
 
 
 @register_model_view(Device, name="config", path="config")
@@ -371,10 +374,20 @@ class BackupTaskListView(View):
 
 class BackupTaskDetailView(View):
     def get(self, request, pk):
+
         task = get_object_or_404(DeviceBackupTask, pk=pk)
-        return render(request, "netbox_device_config/task/task_detail.html", {
-            "task": task
-        })
+
+        target = task.device or task.virtual_machine
+
+        return render(
+            request,
+            "netbox_device_config/task/task_detail.html",
+            {
+                "task": task,
+                "target": target,
+            }
+        )
+
 
 
 class DeviceCredentialBackupView(View):
@@ -382,11 +395,17 @@ class DeviceCredentialBackupView(View):
 
         cred = DeviceCredential.objects.get(pk=pk)
 
+        if not cred.device and not cred.virtual_machine:
+                    messages.error(request, "Credential has no device or VM")
+                    return redirect("plugins:netbox_device_config:devicecredential_list")
+
         task = DeviceBackupTask.objects.create(
-            device=cred.device,
-            credential=cred,
-            status="queued"
-        )
+                   device=cred.device if cred.device else None,
+                   virtual_machine=cred.virtual_machine if cred.virtual_machine else None,
+                   credential=cred,
+                   status="queued",
+               )
+
 
         run_backup_task.delay(task.id)
 
@@ -515,6 +534,9 @@ class DeviceCredentialEditView(View):
 
 
 
+
+
+
 class DeviceCredentialListView(View):
 
     def get(self, request):
@@ -530,20 +552,38 @@ class DeviceCredentialListView(View):
         if per_page not in [10, 25, 50, 100]:
             per_page = 10
 
+        # -------------------------------------------------
+        # QUERY
+        # -------------------------------------------------
         creds = (
             DeviceCredential.objects
-            .select_related("device", "template")
-            .order_by("device__name")
+            .select_related("device", "virtual_machine", "template")
+
+            .annotate(
+                target_name=Coalesce(
+                    F("device__name"),
+                    F("virtual_machine__name"),
+                    Value("")
+                )
+            )
+            .order_by("target_name")
         )
 
+        # -------------------------------------------------
         # SEARCH
+        # -------------------------------------------------
         if search:
             creds = creds.filter(
-                Q(device__id__icontains=search) |
                 Q(device__name__icontains=search) |
+                Q(device__id__icontains=search) |
+                Q(virtual_machine__name__icontains=search) |
+                Q(virtual_machine__id__icontains=search) |
                 Q(host__icontains=search)
             )
 
+        # -------------------------------------------------
+        # PAGINATION
+        # -------------------------------------------------
         paginator = Paginator(creds, per_page)
         page_number = request.GET.get("page")
         page_obj = paginator.get_page(page_number)
@@ -558,6 +598,7 @@ class DeviceCredentialListView(View):
                 "per_page": per_page,
             }
         )
+
 
 
 class DeviceConfigHistoryListView(View):
