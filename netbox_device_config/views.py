@@ -20,7 +20,7 @@ from .tasks import run_backup_task
 from .models import BackupSchedule
 from django.core.paginator import Paginator
 from django.db.models import Q
-from .git_utils import save_config_to_git, get_latest_config, get_config_size_map
+from .git_utils import save_config_to_git, get_latest_config, get_config_size_map, get_config_by_commit
 
 
 
