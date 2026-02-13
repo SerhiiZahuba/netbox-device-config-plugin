@@ -227,6 +227,66 @@ class DeviceConfigTabView(generic.ObjectView):
         )
 
 
+@register_model_view(VirtualMachine, name="config", path="config")
+class VMConfigTabView(generic.ObjectView):
+
+    queryset = VirtualMachine.objects.all()
+
+    tab = ViewTab(
+        label="Config",
+        badge=None,
+        permission="virtualization.view_virtualmachine",
+    )
+
+    def get(self, request, *args, **kwargs):
+
+        vm = get_object_or_404(VirtualMachine, pk=kwargs.get("pk"))
+
+        history_qs = (
+            DeviceBackupTask.objects
+            .filter(virtual_machine=vm, status="success")
+            .order_by("-finished_at")
+        )
+
+        paginator = Paginator(history_qs, 10)
+
+        page_number = request.GET.get("page")
+        history_page = paginator.get_page(page_number)
+
+        latest = history_qs.first()
+
+        conf_size_map = get_config_size_map(vm)
+
+        for conf in history_page:
+            conf.size = conf_size_map.get(conf.git_commit, 0)
+
+        selected_commit = request.GET.get("commit")
+
+        if selected_commit:
+            selected = history_qs.filter(git_commit=selected_commit).first()
+        else:
+            selected = latest
+
+        if selected and selected.git_commit:
+            selected_config = get_config_by_commit(vm, selected.git_commit)
+        else:
+            selected_config = None
+
+        latest_config = get_latest_config(vm)
+
+        return render(
+            request,
+            "netbox_device_config/device_config_tab/device_config_tab.html",
+            {
+                "object": vm,
+                "tab": self.tab,
+                "latest": latest,
+                "history": history_page,
+                "selected": selected,
+                "selected_config": selected_config,
+                "latest_config": latest_config,
+            },
+        )
 
 
 
