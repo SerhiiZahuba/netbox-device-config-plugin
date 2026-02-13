@@ -21,7 +21,7 @@ from .models import BackupSchedule
 from django.core.paginator import Paginator
 from django.db.models import Q
 from .git_utils import save_config_to_git, get_latest_config, get_config_size_map, get_config_by_commit
-
+from virtualization.models import VirtualMachine
 
 
 
@@ -426,29 +426,50 @@ class DeviceCredentialCreateView(View):
     Create new device
     """
     def get(self, request):
-        devices = Device.objects.all().order_by("name")
-        templates = BackupCommandSetting.objects.all().order_by("vendor")
-        return render(request, "netbox_device_config/device/device_add.html", {
-            "devices": devices,
-            "templates": templates,
-        })
+            devices = Device.objects.all().order_by("name")
+            vms = VirtualMachine.objects.all().order_by("name")
+            templates = BackupCommandSetting.objects.all().order_by("vendor")
+
+            return render(
+                request,
+                "netbox_device_config/device/device_add.html",
+                {
+                    "devices": devices,
+                    "vms": vms,
+                    "templates": templates,
+                },
+            )
 
     def post(self, request):
-        device_id = request.POST.get("device")
+        target = request.POST.get("device")
         host = request.POST.get("host")
         port = request.POST.get("port")
         username = request.POST.get("username")
         password = request.POST.get("password")
         template_id = request.POST.get("template")
 
+        device = None
+        vm = None
+
+        if target:
+            obj_type, obj_id = target.split(":")
+
+            if obj_type == "device":
+                device = Device.objects.get(id=obj_id)
+
+            elif obj_type == "vm":
+                vm = VirtualMachine.objects.get(id=obj_id)
+
         DeviceCredential.objects.create(
-            device_id=device_id,
+            device=device,
+            virtual_machine=vm,   # ← нове поле
             host=host,
             port=port,
             username=username,
             password=password,
             template_id=template_id if template_id else None,
         )
+
         return redirect("plugins:netbox_device_config:devicecredential_list")
 
 class DeviceCredentialEditView(View):
