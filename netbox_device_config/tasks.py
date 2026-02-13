@@ -40,6 +40,16 @@ def run_backup_task(task_id):
         template = cred.template
 
         # =====================================================
+        # TARGET (DEVICE OR VM)
+        # =====================================================
+        target = task.device or task.virtual_machine
+
+        if not target:
+            raise Exception("DeviceBackupTask has no target (device or VM)")
+
+        append_log(f"Target: {target}")
+
+        # =====================================================
         # TEMPLATE CHECK
         # =====================================================
         if not template:
@@ -57,9 +67,8 @@ def run_backup_task(task_id):
         for c in commands:
             append_log(f"  - {c}")
 
-        platform_slug = getattr(getattr(task.device, "platform", None), "slug", None)
+        platform_slug = getattr(getattr(target, "platform", None), "slug", None)
         append_log(f"Platform slug: {platform_slug}")
-
 
         # =====================================================
         # RUN DRIVER
@@ -67,13 +76,12 @@ def run_backup_task(task_id):
         append_log("Starting driver")
 
         output = run_driver(
-            device=task.device,
+            target=target,
             template_vendor=template.vendor,
             cred=cred,
             commands=commands,
             append_log=append_log,
         )
-
 
         if not output:
             raise Exception("Empty config received from device")
@@ -85,7 +93,7 @@ def run_backup_task(task_id):
         # =====================================================
         append_log("Saving config to git")
 
-        commit = save_config_to_git(task.device, output)
+        commit = save_config_to_git(target, output)
 
         if commit:
             append_log(f"Git commit: {commit}")
