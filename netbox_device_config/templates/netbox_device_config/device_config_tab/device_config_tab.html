@@ -98,8 +98,8 @@
                         <div class="list-group list-group-flush">
 
                             {% for conf in history %}
-
-                            <pre>{{ selected_config }}</pre>
+                            <a href="?commit={{ conf.git_commit }}&page={{ history.number }}"
+                               class="list-group-item list-group-item-action">
 
                                 <div class="d-flex justify-content-between">
                                     <strong>{{ conf.finished_at|date:"Y-m-d H:i" }}</strong>
@@ -130,8 +130,32 @@
                             </div>
                             {% endfor %}
 
-
                         </div>
+                    </div>
+
+                    <!-- PAGINATION -->
+                    <div class="d-flex justify-content-between mt-2">
+
+                        {% if history.has_previous %}
+                        <a class="btn btn-sm btn-outline-primary"
+                           href="?page={{ history.previous_page_number }}">
+                            ← Older
+                        </a>
+                        {% else %}
+                        <span></span>
+                        {% endif %}
+
+                        {% if history.has_next %}
+                        <a class="btn btn-sm btn-outline-primary"
+                           href="?page={{ history.next_page_number }}">
+                            Newer →
+                        </a>
+                        {% endif %}
+
+                    </div>
+
+                    <div class="text-center small text-muted mt-1">
+                        Page {{ history.number }} / {{ history.paginator.num_pages }}
                     </div>
 
                 </div>
@@ -146,11 +170,12 @@
 
                         <div class="card-body">
 
-                            {% if latest %}
+                            {% if selected_config %}
                             <pre style="max-height:700px;overflow:auto;">
-{{ latest_config }}
-
-                                </pre>
+{{ selected_config }}
+                    </pre>
+                            {% else %}
+                            <div class="text-muted">Select config version</div>
                             {% endif %}
 
                         </div>
@@ -161,6 +186,7 @@
             </div>
 
         </div>
+
 
     </div>
 
