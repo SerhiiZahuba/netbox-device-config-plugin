@@ -1,6 +1,7 @@
 from django.db import models
 from dcim.models import Device
 from dcim.models import Platform
+from virtualization.models import VirtualMachine
 
 
 class DeviceBackupTask(models.Model):
@@ -60,20 +61,33 @@ class BackupCommandSetting(models.Model):
 
 
 class DeviceCredential(models.Model):
-    device = models.OneToOneField(Device, on_delete=models.CASCADE)
+
+    device = models.ForeignKey(
+        Device,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE
+    )
+
+    virtual_machine = models.ForeignKey(
+        VirtualMachine,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE
+    )
+
     host = models.CharField(max_length=255)
     port = models.IntegerField(default=22)
-    username = models.CharField(max_length=100)
+    username = models.CharField(max_length=255)
     password = models.CharField(max_length=255)
 
     template = models.ForeignKey(
         BackupCommandSetting,
-        on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='credentials',
-        help_text="Backup command template to use for this device"
+        on_delete=models.SET_NULL
     )
+
 
 
     snmp_community = models.CharField(
