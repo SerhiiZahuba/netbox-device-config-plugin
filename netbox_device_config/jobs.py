@@ -42,18 +42,25 @@ class SchedulerRunner(JobRunner):
 
             if s.device:
                 creds = DeviceCredential.objects.filter(device=s.device)
+
+            elif s.virtual_machine:
+                creds = DeviceCredential.objects.filter(virtual_machine=s.virtual_machine)
+
             else:
                 creds = DeviceCredential.objects.all()
 
+
             for cred in creds:
                 task = DeviceBackupTask.objects.create(
-                    device=cred.device,
+                    device_id=cred.device_id,
+                    virtual_machine_id=cred.virtual_machine_id,
                     credential=cred,
                     status="queued",
                     queued_at=timezone.now(),
                 )
 
                 run_backup_task.delay(task.id)
+
 
             s.last_run = now
             s.save()
