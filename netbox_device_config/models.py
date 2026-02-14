@@ -106,7 +106,9 @@ class DeviceCredential(models.Model):
     )
 
     def __str__(self):
-        return f"{self.device.name} ({self.host})"
+        target = self.device or self.virtual_machine
+        return f"{target} ({self.host})"
+
 
 
 
@@ -153,6 +155,12 @@ class BackupSchedule(models.Model):
     last_run = models.DateTimeField(null=True, blank=True)
 
     created = models.DateTimeField(auto_now_add=True)
+    virtual_machine = models.ForeignKey(
+            VirtualMachine,
+            null=True,
+            blank=True,
+            on_delete=models.CASCADE
+        )
 
     class Meta:
         ordering = ["name"]
