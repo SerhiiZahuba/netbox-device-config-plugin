@@ -26,13 +26,6 @@ from django.db.models.functions import Coalesce
 
 
 
-#from django.shortcuts import render, get_object_or_404
-#from dcim.models import Device
-
-#from .models import DeviceBackupTask
-#from .git_utils import get_latest_config
-
-
 
 class BackupTasksListView(View):
     def get(self, request):
@@ -292,6 +285,9 @@ class VMConfigTabView(generic.ObjectView):
 
 
 
+
+
+
 class BackupStatisticsView(View):
 
     def get(self, request):
@@ -311,11 +307,11 @@ class BackupStatisticsView(View):
 
         failed_backups = DeviceBackupTask.objects.filter(status="error").count()
 
-        # last backup per device
+        # last backup per device/VM
         last_backups = (
             DeviceBackupTask.objects
             .filter(status="success")
-            .values("device")
+            .values("device", "virtual_machine")
             .annotate(last_time=Max("finished_at"))
         )
 
@@ -335,7 +331,7 @@ class BackupStatisticsView(View):
 
         tasks_qs = (
             DeviceBackupTask.objects
-            .select_related("device")
+            .select_related("device", "virtual_machine")
             .order_by("-id")
         )
 
@@ -345,7 +341,10 @@ class BackupStatisticsView(View):
         elif filter_status == "ok":
             tasks_qs = tasks_qs.filter(status="success")
 
-        last_tasks = tasks_qs[:50]
+        # ===== PAGINATION =====
+        paginator = Paginator(tasks_qs, 30)
+        page_number = request.GET.get("page")
+        page_obj = paginator.get_page(page_number)
 
         return render(request, "netbox_device_config/statistics/statistics.html", {
             "total_devices": total_devices,
@@ -354,9 +353,11 @@ class BackupStatisticsView(View):
             "failed_backups": failed_backups,
             "devices_without_backup": devices_without_backup,
             "stale_devices": stale_devices,
-            "last_tasks": last_tasks,
+            "last_tasks": page_obj,
+            "page_obj": page_obj,
             "filter_status": filter_status,
         })
+
 
 
 
