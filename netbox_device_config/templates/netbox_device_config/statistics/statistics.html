@@ -1,7 +1,7 @@
 {% extends 'base/layout.html' %}
 {% block content %}
 
-<h2 class="mb-4">Config Backup NOC Dashboard</h2>
+<h2 class="mb-4">Config Backup Dashboard</h2>
 
 <div class="row">
 
@@ -100,7 +100,8 @@
             <thead>
             <tr>
                 <th>ID</th>
-                <th>Device</th>
+                <th>Type</th>
+                <th>Targets</th>
                 <th>Status</th>
                 <th>Finished</th>
             </tr>
@@ -110,7 +111,24 @@
             {% for t in last_tasks %}
             <tr>
                 <td>{{ t.id }}</td>
-                <td>{{ t.device }}</td>
+                <td>
+                    {% if t.device %}
+                    <span class="badge bg-danger">Device</span>
+                    {% else %}
+                    <span class="badge bg-info">VM</span>
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if t.device %}
+                    {{ t.device }}
+                    {% elif t.virtual_machine %}
+                    <span class="text-info">VM:</span> {{ t.virtual_machine }}
+                    {% else %}
+                    —
+                    {% endif %}
+                </td>
+
                 <td>
                     {% if t.status == "success" %}
                     <span class="badge bg-success">OK</span>
@@ -126,6 +144,42 @@
 
             </tbody>
         </table>
+
+
+        <!-- 1 -->
+
+        <nav>
+    <ul class="pagination pagination-sm">
+
+        {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1{% if filter_status %}&status={{ filter_status }}{% endif %}">« first</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if filter_status %}&status={{ filter_status }}{% endif %}">‹ prev</a>
+            </li>
+        {% endif %}
+
+        <li class="page-item active">
+            <span class="page-link">
+                Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+            </span>
+        </li>
+
+        {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if filter_status %}&status={{ filter_status }}{% endif %}">next ›</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if filter_status %}&status={{ filter_status }}{% endif %}">last »</a>
+            </li>
+        {% endif %}
+
+    </ul>
+</nav>
+
+
+       <!-- 1 -->
 
     </div>
 </div>
