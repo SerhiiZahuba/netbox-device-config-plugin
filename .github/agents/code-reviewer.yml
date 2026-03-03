@@ -1,0 +1,186 @@
+name: Code Reviewer
+description: Автоматичний агент для перевірки та ревізії коду Python (NetBox плагін)
+version: 1.0.0
+
+# Налаштування агента
+agent:
+  type: code-review
+  model: claude-3-5-sonnet-20241022
+  
+# Тригери для запуску агента
+triggers:
+  - pull_request:
+      types: [opened, synchronize, reopened]
+      paths:
+        - "**.py"
+        - "**.yml"
+        - "**.yaml"
+        - "pyproject.toml"
+        - "setup.py"
+  - pull_request_review:
+      types: [submitted]
+
+# Правила перевірки коду
+rules:
+  # Перевірка стилю коду
+  - name: code-style
+    description: Перевірка відповідності PEP 8 та Django best practices
+    severity: warning
+    checks:
+      - pep8_compliance
+      - django_best_practices
+      - import_ordering
+      - docstring_presence
+      
+  # Перевірка безпеки
+  - name: security
+    description: Виявлення потенційних вразливостей безпеки
+    severity: error
+    checks:
+      - sql_injection
+      - xss_vulnerabilities
+      - hardcoded_secrets
+      - insecure_random
+      - command_injection
+      
+  # Перевірка продуктивності
+  - name: performance
+    description: Аналіз продуктивності та оптимізації
+    severity: info
+    checks:
+      - database_query_optimization
+      - n_plus_one_queries
+      - unnecessary_loops
+      
+  # Перевірка логіки
+  - name: logic
+    description: Виявлення логічних помилок та неоптимального коду
+    severity: warning
+    checks:
+      - null_pointer_checks
+      - error_handling
+      - dead_code
+      - unreachable_code
+      
+  # Перевірка тестів
+  - name: tests
+    description: Валідація тестового покриття
+    severity: info
+    checks:
+      - test_coverage
+      - test_quality
+      
+  # Перевірка документації
+  - name: documentation
+    description: Перевірка наявності та якості документації
+    severity: info
+    checks:
+      - docstrings_present
+      - readme_updated
+      - changelog_updated
+
+# Специфічні правила для Django/NetBox
+django_rules:
+  - check_model_migrations
+  - validate_admin_registration
+  - check_url_patterns
+  - validate_view_permissions
+  - check_template_syntax
+  
+# Спеціальні перевірки для NetBox плагінів
+netbox_plugin_rules:
+  - validate_plugin_config
+  - check_plugin_dependencies
+  - validate_navigation_menu
+  - check_api_serializers
+  
+# Налаштування коментарів
+commenting:
+  # Коментувати тільки критичні та важливі проблеми
+  min_severity: warning
+  
+  # Групувати коментарі по файлах
+  group_by_file: true
+  
+  # Додавати пропозиції виправлень
+  suggest_fixes: true
+  
+  # Приклади коду в коментарях
+  include_code_examples: true
+  
+  # Мова коментарів
+  language: uk  # українська
+
+# Автоматичні дії
+actions:
+  # Автоматично створювати review comments
+  auto_comment: true
+  
+  # Запитувати зміни якщо знайдено критичні проблеми
+  request_changes_on_error: true
+  
+  # Автоматично схвалювати якщо немає проблем
+  auto_approve_on_success: false
+  
+  # Додавати мітки до PR
+  add_labels:
+    - label: "needs-review"
+      condition: has_warnings
+    - label: "security-issue"
+      condition: has_security_issues
+    - label: "needs-tests"
+      condition: missing_tests
+
+# Виключення
+exclude:
+  paths:
+    - "**/migrations/**"
+    - "**/tests/fixtures/**"
+    - "**/__pycache__/**"
+    - "**/*.pyc"
+    - ".git/**"
+  
+  files:
+    - "setup.py"  # Виключаємо тільки для критичних перевірок
+    
+# Інтеграції
+integrations:
+  # Інтеграція з CodeQL
+  codeql:
+    enabled: true
+    
+  # Інтеграція з GitHub Advisory Database
+  github_advisory:
+    enabled: true
+    check_dependencies: true
+    
+# Звіти
+reporting:
+  # Створювати summary в PR
+  create_summary: true
+  
+  # Формат звіту
+  format: markdown
+  
+  # Включати статистику
+  include_stats: true
+  
+  # Включати метрики якості коду
+  include_metrics: true
+
+# Навчання та покращення
+learning:
+  # Вчитися на відгуках розробників
+  learn_from_feedback: true
+  
+  # Покращувати точність з часом
+  improve_accuracy: true
+
+# Пріоритети перевірки
+priorities:
+  - security  # Найвищий пріоритет
+  - logic
+  - code-style
+  - performance
+  - documentation
+  - tests
